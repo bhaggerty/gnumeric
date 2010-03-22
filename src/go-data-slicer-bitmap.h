@@ -81,7 +81,7 @@ struct _GODataSlicerBitmap
 	GODataSlicerBitmap * (*intersect_with) (GODataSlicerBitmap * self, GODataSlicerBitmap * other);
 };
 
-GType go_data_slicer_bitmap_get_type (void) G_GNUC_CONST;
+GType go_data_slicer_bitmap_get_type (void);
 
 /**
  * is_member

@@ -73,7 +73,7 @@ GType go_data_slicer_tuple_get_type (void) G_GNUC_CONST;
  * @param other - the tuple to compare this tuple to
  * @return 1 if this tuple should appear before other, -1 if this tuple should appear after other, and 0 otherwise (equality).
  */
-int go_data_slicer_tuple_compare_to (GODataSlicerTuple * self, GODataSlicerTuple * other);
+int go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other);
 
 G_END_DECLS
 

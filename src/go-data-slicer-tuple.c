@@ -133,7 +133,7 @@ go_data_slicer_tuple_class_init (GODataSlicerTupleClass *klass)
 	                                                      G_PARAM_READABLE | G_PARAM_CONSTRUCT_ONLY));
 }
 
-int go_data_slicer_tuple_compare_to (GODataSlicerTuple * self, GODataSlicerTuple * other) {
+int go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other) {
 	guint i, comparison;
 	GPtrArray * tuple_template;	
 	g_warn_if_fail(self->slicer_index == other->slicer_index);

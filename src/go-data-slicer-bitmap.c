@@ -36,17 +36,6 @@ enum
 	PROP_NUM_UNCOMPRESSED_BLOCKS
 };
 
-
-/**
- * private clone
- *
- */
-static GODataSlicerBitmap * 
-go_data_slicer_bitmap_clone(GODataSlicerBitmap *self) {
-	/*TODO: Implement private method*/
-	return NULL;
-}
-
 /**
  * private block_is_compressed
  *
@@ -59,10 +48,18 @@ go_data_slicer_bitmap_clone(GODataSlicerBitmap *self) {
  */
 static gboolean 
 go_data_slicer_bitmap_block_is_compressed(GODataSlicerBitmap *self, guint blocknum) {
+
+	guint8 blockmap_block, mask;
+	
+	/*if blocknum is outside of the range of the bitmap, return FALSE*/
+	if ((blocknum-1)/8 >= self->block_map->len) {
+		return FALSE;
+	}
+	
 	/*The guint8 'bin' the blocknum-th bit resides in*/
-	guint8 blockmap_block = g_array_index(self->block_map, guint8, (blocknum-1)/8);
+	blockmap_block = g_array_index(self->block_map, guint8, (blocknum-1)/8);
 	/*A mask which extracts the bit from the 'bin'*/
-	guint8 mask = 0x1 << (7-((blocknum-1)%8));
+	mask = 0x1 << (7-((blocknum-1)%8));
 	/*Check to see if the bit is set by setting it and seeing if the 'bin' changes*/
 	if (blockmap_block == (blockmap_block | mask)) {
 		return TRUE;
@@ -85,10 +82,18 @@ go_data_slicer_bitmap_block_is_compressed(GODataSlicerBitmap *self, guint blockn
  */
 static void 
 go_data_slicer_bitmap_block_set_compressed_flag(GODataSlicerBitmap *self, guint blocknum, gboolean is_compressed) {
+
+	guint8 blockmap_block, mask;
+	guint8 zero = 0x0;
+	guint bin = (blocknum-1)/8;
+	/*make the bin for the blocknum-th bit, if it doesn't exist*/
+	if (bin >= self->block_map->len) {
+		g_array_insert_val(self->block_map,bin,zero);
+	}
 	/*The guint8 'bin' the blocknum-th bit resides in*/
-	guint8 blockmap_block = g_array_index(self->block_map, guint8, (blocknum-1)/8);
+	blockmap_block = g_array_index(self->block_map, guint8, bin);
 	/*A mask which extracts the bit from the 'bin'*/
-	guint8 mask = 0x1 << (7-(((blocknum-1)%8)));
+	mask = 0x1 << (7-(((blocknum-1)%8)));
 	/*Set the bit*/
 	if (is_compressed) {
 		blockmap_block = blockmap_block | mask;
@@ -96,7 +101,7 @@ go_data_slicer_bitmap_block_set_compressed_flag(GODataSlicerBitmap *self, guint 
 		blockmap_block = blockmap_block & (~mask);
 	}
 	g_array_append_val(self->block_map, blockmap_block);
-	g_array_remove_index_fast (self->block_map, (blocknum-1)/8); /*removes an element and replaces it with the last element*/
+	g_array_remove_index_fast (self->block_map, bin); /*removes an element and replaces it with the last element*/
 }
 
 /**
@@ -106,7 +111,7 @@ go_data_slicer_bitmap_block_set_compressed_flag(GODataSlicerBitmap *self, guint 
  * blocks, into the actual array index for that block in blocks (which does
  * not store empty blocks).
  *
- * PRECONDITION: block is not compressed
+ * PRECONDITION: block is not compressed and exists
  *
  * @param blocknum - the block number to convert
  * @return the index of blocknum in blocks
@@ -118,6 +123,7 @@ go_data_slicer_bitmap_get_block_index(GODataSlicerBitmap *self, guint blocknum) 
 	/*start by figuring out which 8bit bin in block_map this blocknum's bit resides*/
 	guint8 blockmap_block_num = (blocknum-1)/8;
 
+	
 	/*count the number of uncompressed blocks which appear before this block -
 	  note that this is equivalent to counting 1s in block_map.  Start by
 	  counting up to (but not including) blockmap_block_num*/
@@ -158,6 +164,8 @@ go_data_slicer_bitmap_finalize (GObject *object)
 	/*deinitalization code here */
 	g_array_unref(self->block_map);
 	g_array_unref(self->blocks);
+	self->blocks = NULL;
+	self->block_map = NULL;
 	G_OBJECT_CLASS (go_data_slicer_bitmap_parent_class)->finalize (object);
 }
 
@@ -227,15 +235,15 @@ go_data_slicer_bitmap_class_init (GODataSlicerBitmapClass *klass)
 
 	g_object_class_install_property (object_class,
 	                                 PROP_NUM_BLOCKS,
-	                                 g_param_spec_int ("NUM_BLOCKS",
+	                                 g_param_spec_int ("num_blocks",
 	                                                      "num_blocks",
 	                                                      "Total number of blocks in this bitmap (compressed or uncompressed)",
-	                                                      1,G_MAXUINT,DEFAULT_NUM_BLOCKS,
+	                                                      1,G_MAXUINT,(DEFAULT_NUM_BLOCKS%8 == 0 ? DEFAULT_NUM_BLOCKS/8 : (DEFAULT_NUM_BLOCKS/8 + 1)),
 	                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
 
 	g_object_class_install_property (object_class,
 	                                 PROP_NUM_UNCOMPRESSED_BLOCKS,
-	                                 g_param_spec_int  ("NUM_UNCOMPRESSED_BLOCKS",
+	                                 g_param_spec_int  ("num_uncompressed_blocks",
 	                                                      "num_uncompressed_blocks",
 	                                                      "Total number of uncompressed blocks in this bitmap.",
 	                                                      1,G_MAXUINT,DEFAULT_NUM_UNCOMPRESSED_BLOCKS,
@@ -252,7 +260,7 @@ go_data_slicer_bitmap_set_member (GODataSlicerBitmap * self, guint bitnum, gbool
 	if (go_data_slicer_bitmap_block_is_compressed(self, blocknum)) {
 		/*decompress block*/
 		g_array_insert_val(self->blocks, block_index, mask);
-		go_data_slicer_bitmap_block_set_compressed_flag(self, blocknum, TRUE);
+		go_data_slicer_bitmap_block_set_compressed_flag(self, blocknum, FALSE);
 	} else {
 		/*set the appropriate block to new value*/
 		guint32 new_value = g_array_index(self->blocks, guint32, block_index) | mask; /*calculate new block*/
@@ -263,12 +271,16 @@ go_data_slicer_bitmap_set_member (GODataSlicerBitmap * self, guint bitnum, gbool
 
 void 
 go_data_slicer_bitmap_set_block (GODataSlicerBitmap * self, guint blocknum, guint32 value) {
-	guint block_index = go_data_slicer_bitmap_get_block_index(self, blocknum); /*where the new block should go, or where it is already*/
+	guint block_index;
+	
+	if (value == 0) return; /*No need to change anything if we're not adding any information*/
+	
+	block_index = go_data_slicer_bitmap_get_block_index(self, blocknum); /*where the new block should go, or where it is already*/
 	/*Check to see if the block is compressed*/
 	if (go_data_slicer_bitmap_block_is_compressed(self, blocknum)) {
 		/*decompress block*/
 		g_array_insert_val(self->blocks, block_index, value);
-		go_data_slicer_bitmap_block_set_compressed_flag(self, blocknum, TRUE);
+		go_data_slicer_bitmap_block_set_compressed_flag(self, blocknum, FALSE);
 	} else {
 		/*set the appropriate block to value*/
 		g_array_append_val(self->blocks, value);
@@ -304,9 +316,18 @@ go_data_slicer_bitmap_is_member (GODataSlicerBitmap * self, guint bitnum)
 GODataSlicerBitmap *
 go_data_slicer_bitmap_intersect_with (GODataSlicerBitmap * self, GODataSlicerBitmap * other)
 {
-	/* TODO: Add public function implementation here, using clone (see above) to
-	   quickly and efficiently make a new bitmap to represent the result (clone
-	   one of the two intersecting bitmaps and store the result in its bitmap,
-	   since the size of the result can only decrease)*/
-	return NULL;
+	guint i;
+	/*Note that the size of the two arrays can only decrease during union*/
+	GODataSlicerBitmap * result = g_object_new (GO_DATA_SLICER_BITMAP_TYPE, "num_blocks", self->block_map->len, "num_uncompressed_blocks", self->blocks->len, NULL);
+	for (i=0;i<self->block_map->len*8;i++) {
+		/*if either block is compressed, the same block in the result will also be compressed*/
+		if (go_data_slicer_bitmap_block_is_compressed(self, i) || go_data_slicer_bitmap_block_is_compressed(other, i)) {
+			go_data_slicer_bitmap_block_set_compressed_flag(result, i, TRUE);
+		} else {
+			/*perform intersection 32 bits at a time*/
+			result->set_block(result, i, g_array_index(self->blocks,guint32,i) & g_array_index(other->blocks,guint32,i));
+		}
+	}	
+	
+	return result;
 }

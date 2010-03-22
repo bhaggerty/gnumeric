@@ -50,3 +50,6 @@ libspreadsheet*.pc
 *.xlsx
 doltcompile
 *~
+*.anjuta*
+TODO.tasks
+Makefile.bak
