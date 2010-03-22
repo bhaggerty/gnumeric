@@ -28,6 +28,25 @@
 #define DEFAULT_NUM_BLOCKS 8
 #define DEFAULT_NUM_UNCOMPRESSED_BLOCKS 5
 
+static int PreCompute8 [256] =
+{    0, 1, 1, 2, 1, 2, 2, 3, 1, 2, 2, 3, 2, 3, 3, 4,
+     1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+     1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+     2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+     1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+     2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+     2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+     3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+     1, 2, 2, 3, 2, 3, 3, 4, 2, 3, 3, 4, 3, 4, 4, 5,
+     2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+     2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+     3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+     2, 3, 3, 4, 3, 4, 4, 5, 3, 4, 4, 5, 4, 5, 5, 6,
+     3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+     3, 4, 4, 5, 4, 5, 5, 6, 4, 5, 5, 6, 5, 6, 6, 7,
+     4, 5, 5, 6, 5, 6, 6, 7, 5, 6, 6, 7, 6, 7, 7, 8
+};
+
 enum
 {
 	PROP_0,
@@ -235,7 +254,7 @@ go_data_slicer_bitmap_class_init (GODataSlicerBitmapClass *klass)
 
 	g_object_class_install_property (object_class,
 	                                 PROP_NUM_BLOCKS,
-	                                 g_param_spec_int ("num_blocks",
+	                                 g_param_spec_uint ("num_blocks",
 	                                                      "num_blocks",
 	                                                      "Total number of blocks in this bitmap (compressed or uncompressed)",
 	                                                      1,G_MAXUINT,(DEFAULT_NUM_BLOCKS%8 == 0 ? DEFAULT_NUM_BLOCKS/8 : (DEFAULT_NUM_BLOCKS/8 + 1)),
@@ -243,7 +262,7 @@ go_data_slicer_bitmap_class_init (GODataSlicerBitmapClass *klass)
 
 	g_object_class_install_property (object_class,
 	                                 PROP_NUM_UNCOMPRESSED_BLOCKS,
-	                                 g_param_spec_int  ("num_uncompressed_blocks",
+	                                 g_param_spec_uint  ("num_uncompressed_blocks",
 	                                                      "num_uncompressed_blocks",
 	                                                      "Total number of uncompressed blocks in this bitmap.",
 	                                                      1,G_MAXUINT,DEFAULT_NUM_UNCOMPRESSED_BLOCKS,
