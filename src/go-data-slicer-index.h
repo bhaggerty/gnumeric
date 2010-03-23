@@ -42,12 +42,14 @@ typedef struct _GODataSlicerIndex GODataSlicerIndex; /* dummy object */
 typedef struct {
 	GTypeInterface		   base;
 
-	GPtrArray * (*get_tuple_template) (const GODataSlicerIndex *self);
+	GPtrArray * (*get_tuple_template) (GODataSlicerIndex *self);
 	void (*set_tuple_template) (GODataSlicerIndex *self, GPtrArray *tuple_template);
 	void (*index_record) (GODataSlicerIndex *self, unsigned int record_num);
-	GODataSlicerBitmap * (*retrieve_bitmap) (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple);
-    void (*retrieve_all_bitmaps_sorted) (const GODataSlicerIndex *self, GPtrArray *tuples, GPtrArray *bitmaps);
-     
+	/*TODO: uncomment after impelementing involved classes*/
+	/* GODataSlicerBitmap * (*retrieve_bitmap) (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple);*/
+
+	/*TODO: add method which takes pointers to two arrays and fills them with
+	  all keys and all bitmaps, in sorted order.*/
 } GODataSlicerIndexInterface;
 
 #define GO_DATA_SLICER_INDEX_TYPE	  (go_data_slicer_index_get_type ())
@@ -71,7 +73,7 @@ GType go_data_slicer_index_get_type (void);
  * @return a GPtrArray of go-data-cache-fields representing this SlicerIndex's tuple template.
  */
 GPtrArray * 
-go_data_slicer_index_get_tuple_template (const GODataSlicerIndex *self);
+go_data_slicer_index_get_tuple_template (GODataSlicerIndex *self);
 
 /**
  * set_tuple_template
@@ -111,22 +113,9 @@ go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_
  * @param tuple - the GODataSlicerTuple to search for
  * @return the bitmap associated with tuple, or NULL if the tuple does not exist
  */
-GODataSlicerBitmap * 
-go_data_slicer_index_retrieve_bitmap (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple);
-
-
-/**
- * retrieve_all_bitmaps_sorted
- * 
- * Fills two empty arrays with all bitmaps in this SlicerIndex, sorted in
- * ascending order by Tuple.
- *
- * @param self - this GODataSlicerIndex
- * @param tuples - an empty GPtrArray which will be filled with tuples in sorted order.
- * @param bitmaps - an empty GPtrArray which will be filled with bitmaps, sorted by tuple.
- */
-void
-go_data_slicer_index_retrieve_all_bitmaps_sorted (const GODataSlicerIndex *self, GPtrArray *tuples, GPtrArray *bitmaps);
+/*TODO: uncomment after impelementing referenced classes*/
+/*GODataSlicerBitmap * 
+go_data_slicer_index_retrieve_bitmap (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple);*/
 
 G_END_DECLS
 

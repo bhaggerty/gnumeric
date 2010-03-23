@@ -41,7 +41,7 @@ go_data_slicer_index_get_type (void)
 }
 
 GPtrArray * 
-go_data_slicer_index_get_tuple_template (const GODataSlicerIndex *self) {
+go_data_slicer_index_get_tuple_template (GODataSlicerIndex *self) {
 	 g_return_val_if_fail (IS_GO_DATA_SLICER_INDEX(self), NULL);
 	 return GO_DATA_SLICER_INDEX_GET_INTERFACE (self)->get_tuple_template (self);
 }
@@ -58,14 +58,9 @@ go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_
 	 return GO_DATA_SLICER_INDEX_GET_INTERFACE (self)->index_record (self, record_num);
 }
 
-GODataSlicerBitmap * 
+/*TODO: uncomment after impelementing referenced classes*/
+/*GODataSlicerBitmap * 
 go_data_slicer_index_retrieve_bitmap (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple) {
 	 g_return_val_if_fail (IS_GO_DATA_SLICER_INDEX(self), NULL);
 	 return GO_DATA_SLICER_INDEX_GET_INTERFACE (self)->retrieve_bitmap (self, tuple);
-}
-
-void
-go_data_slicer_index_retrieve_all_bitmaps_sorted (const GODataSlicerIndex *self, GPtrArray *tuples, GPtrArray *bitmaps) {
-     g_return_if_fail(IS_GO_DATA_SLICER_INDEX(self));
-     return GO_DATA_SLICER_INDEX_GET_INTERFACE (self)->retrieve_all_bitmap_sorted (self, tuples, bitmaps);
-}
+}*/

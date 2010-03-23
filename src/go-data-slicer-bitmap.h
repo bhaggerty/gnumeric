@@ -61,11 +61,11 @@ struct _GODataSlicerBitmap
 	guint max_blocks;   /*The number of 32-bit blocks the memory size of this bitmap can accomodate*/
 	guint max_uncompressed_blocks;  /*The number of 32-bit blocks which can be uncompressed and used to store data without changing the memory size of this bitmap*/
 
-	gboolean (*is_member) (const GODataSlicerBitmap * self, guint bitnum);
+	gboolean (*is_member) (GODataSlicerBitmap * self, guint bitnum);
 	void (*set_member) (GODataSlicerBitmap * self, guint bitnum, gboolean is_member);
 	void (*set_block) (GODataSlicerBitmap * self, guint blocknum, guint32 value);
-	guint32 (*get_block) (const GODataSlicerBitmap * self, guint blocknum);
-	GODataSlicerBitmap * (*intersect_with) (const GODataSlicerBitmap * self, const GODataSlicerBitmap * other);
+	guint32 (*get_block) (GODataSlicerBitmap * self, guint blocknum);
+	GODataSlicerBitmap * (*intersect_with) (GODataSlicerBitmap * self, GODataSlicerBitmap * other);
 };
 
 GType go_data_slicer_bitmap_get_type (void);
@@ -77,7 +77,7 @@ GType go_data_slicer_bitmap_get_type (void);
  * @param bitnum - the bit to check (zero-indexed)
  * @return true if bit bitnum is 1, false otherwise.
  */
-gboolean go_data_slicer_bitmap_is_member (const GODataSlicerBitmap * self, guint bitnum);
+gboolean go_data_slicer_bitmap_is_member (GODataSlicerBitmap * self, guint bitnum);
 
 /**
  * set_member
@@ -109,7 +109,7 @@ void go_data_slicer_bitmap_set_block (GODataSlicerBitmap * self, guint blocknum,
  * @param blocknum - the block to get (zero-indexed)
  * @return the virtual block's value
  */
-guint32 go_data_slicer_bitmap_get_block (const GODataSlicerBitmap * self, guint blocknum);
+guint32 go_data_slicer_bitmap_get_block (GODataSlicerBitmap * self, guint blocknum);
 
 /**
  * intersect_with
@@ -120,7 +120,7 @@ guint32 go_data_slicer_bitmap_get_block (const GODataSlicerBitmap * self, guint 
  * @param other - another bitmap with the same number of blocks
  * @return - a new bitmap representing the result of the intersection.
  */
-GODataSlicerBitmap * go_data_slicer_bitmap_intersect_with (const GODataSlicerBitmap * self, const GODataSlicerBitmap * other);
+GODataSlicerBitmap * go_data_slicer_bitmap_intersect_with (GODataSlicerBitmap * self, GODataSlicerBitmap * other);
 
 G_END_DECLS
 

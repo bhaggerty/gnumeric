@@ -68,7 +68,7 @@ enum
  * @return TRUE if the block is compressed, FALSE otherwise.
  */
 static gboolean 
-go_data_slicer_bitmap_block_is_compressed(const GODataSlicerBitmap *self, guint blocknum) {
+go_data_slicer_bitmap_block_is_compressed(GODataSlicerBitmap *self, guint blocknum) {
 
 	guint8 blockmap_block, mask;
 	
@@ -147,7 +147,7 @@ go_data_slicer_bitmap_block_set_compressed_flag(GODataSlicerBitmap *self, guint 
  * @return the index of blocknum in blocks
  */
 static guint
-go_data_slicer_bitmap_get_block_index(const GODataSlicerBitmap *self, guint virt_blocknum) {
+go_data_slicer_bitmap_get_block_index(GODataSlicerBitmap *self, guint virt_blocknum) {
 	int i; guint8 mask;
 	guint result = 0;
 	
@@ -405,7 +405,7 @@ go_data_slicer_bitmap_set_block (GODataSlicerBitmap * self, guint blocknum, guin
 	}
 }
 
-guint32 go_data_slicer_bitmap_get_block (const GODataSlicerBitmap * self, guint blocknum) {
+guint32 go_data_slicer_bitmap_get_block (GODataSlicerBitmap * self, guint blocknum) {
 	if (go_data_slicer_bitmap_block_is_compressed(self, blocknum)) {
 		return 0x0;
 	} else {
@@ -414,7 +414,7 @@ guint32 go_data_slicer_bitmap_get_block (const GODataSlicerBitmap * self, guint 
 }
 
 gboolean
-go_data_slicer_bitmap_is_member (const GODataSlicerBitmap * self, guint bitnum)
+go_data_slicer_bitmap_is_member (GODataSlicerBitmap * self, guint bitnum)
 {
 	guint32 block, mask;
 
@@ -442,7 +442,7 @@ go_data_slicer_bitmap_is_member (const GODataSlicerBitmap * self, guint bitnum)
 }
 
 GODataSlicerBitmap *
-go_data_slicer_bitmap_intersect_with (const GODataSlicerBitmap * self, const GODataSlicerBitmap * other)
+go_data_slicer_bitmap_intersect_with (GODataSlicerBitmap * self, GODataSlicerBitmap * other)
 {
 	guint i;
 	/*Note that the size of the two arrays can only decrease during union*/

@@ -35,9 +35,9 @@ enum
 {
 	PROP_0,
 
-	PROP_RECORDNUM, /*The cache record this tuple draws values from*/
-	PROP_CACHE, /*The cache this tuple is associated with*/
-	PROP_INDEX /*The slicer index this tuple is associated with*/
+	PROP_RECORDNUM,
+	PROP_CACHE,
+	PROP_INDEX
 };
 
 
@@ -120,15 +120,11 @@ go_data_slicer_tuple_class_init (GODataSlicerTupleClass *klass)
 
 	g_object_class_install_property (object_class, PROP_CACHE,
 		 g_param_spec_object ("cache", NULL, NULL,
-			GO_DATA_CACHE_TYPE, GSF_PARAM_STATIC | G_PARAM_READABLE | G_PARAM_CONSTRUCT_ONLY));
-
-	g_object_class_install_property (object_class, PROP_INDEX,
-		 g_param_spec_object ("index", NULL, NULL,
-			GO_DATA_SLICER_INDEX_TYPE, G_PARAM_READABLE | G_PARAM_CONSTRUCT_ONLY));
+			GO_DATA_CACHE_TYPE, GSF_PARAM_STATIC | G_PARAM_READWRITE));
 	
 	g_object_class_install_property (object_class,
 	                                 PROP_RECORDNUM,
-	                                 g_param_spec_int    ("record_num",
+	                                 g_param_spec_int    ("RECORDNUM",
 	                                                      "record_num",
 	                                                      "The record in the cache this tuple draws values from.",
 	                                                      -1,
