@@ -55,7 +55,7 @@ struct _GODataSlicerTupleClass
 struct _GODataSlicerTuple
 {
 	GObject parent_instance;
-	GODataCache	*cache;
+	static GODataCache *cache;
 	GODataSlicerIndex *slicer_index;	
 	unsigned int record_num;
 		
