@@ -1,7 +1,8 @@
 /* -*- Mode: C; indent-tabs-mode: t; c-basic-offset: 4; tab-width: 4 -*- */
 /*
  * gnumeric
- * Copyright (C) Sean McIntyre 2010 <s.mcintyre@utoronto.ca>
+ * Copyright (C) 2010 Sean McIntyre <s.mcintyre@utoronto.ca> 
+ *                    David Algar   <david.algar@utoronto.ca>
  * 
  * gnumeric is free software: you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the

@@ -1,7 +1,8 @@
 /*
  * go-data-slicer-index.h :
  *
- * Copyright (C) 2010 Sean McIntyre (s.mcintyre@utoronto.ca)
+ * Copyright (C) 2010 Sean McIntyre <s.mcintyre@utoronto.ca> 
+ *                    David Algar   <david.algar@utoronto.ca>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -34,23 +35,9 @@
 #define GO_DATA_SLICER_INDEX_H
 
 #include <glib-object.h>
+#include "go-data-slicer-bitmap.h"
 
 G_BEGIN_DECLS
-
-typedef struct _GODataSlicerIndex GODataSlicerIndex; /* dummy object */
-
-typedef struct {
-	GTypeInterface		   base;
-
-	GPtrArray * (*get_tuple_template) (GODataSlicerIndex *self);
-	void (*set_tuple_template) (GODataSlicerIndex *self, GPtrArray *tuple_template);
-	void (*index_record) (GODataSlicerIndex *self, unsigned int record_num);
-	/*TODO: uncomment after impelementing involved classes*/
-	/* GODataSlicerBitmap * (*retrieve_bitmap) (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple);*/
-
-	/*TODO: add method which takes pointers to two arrays and fills them with
-	  all keys and all bitmaps, in sorted order.*/
-} GODataSlicerIndexInterface;
 
 #define GO_DATA_SLICER_INDEX_TYPE	  (go_data_slicer_index_get_type ())
 #define GO_DATA_SLICER_INDEX(o)		  (G_TYPE_CHECK_INSTANCE_CAST ((o), GO_DATA_SLICER_INDEX_TYPE, GODataSlicerIndex))
@@ -58,6 +45,25 @@ typedef struct {
 #define GO_DATA_SLICER_INDEX_CLASS(k)	  (G_TYPE_CHECK_CLASS_CAST ((k), GO_DATA_SLICER_INDEX_TYPE, GODataSlicerIndexInterface))
 #define IS_GO_DATA_SLICER_INDEX_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), GO_DATA_SLICER_INDEX_TYPE))
 #define GO_DATA_SLICER_INDEX_GET_INTERFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE ((o), GO_DATA_SLICER_INDEX_TYPE, GODataSlicerIndexInterface))
+
+typedef struct _GODataSlicerIndex GODataSlicerIndex; /* dummy object */
+typedef struct _GODataSlicerIndexInterface GODataSlicerIndexInterface;
+
+/**Resolve circular dependency between this and go-data-slicer-tuple***********/
+G_END_DECLS
+#include "go-data-slicer-tuple.h"
+G_BEGIN_DECLS
+/******************************************************************************/
+
+struct _GODataSlicerIndexInterface {
+	GTypeInterface		   base;
+
+	GPtrArray * (*get_tuple_template) (const GODataSlicerIndex *self);
+	void (*set_tuple_template) (GODataSlicerIndex *self, GPtrArray *tuple_template);
+	void (*index_record) (GODataSlicerIndex *self, unsigned int record_num);
+	GODataSlicerBitmap * (*retrieve_bitmap) (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple);
+    void (*retrieve_all_bitmaps) (const GODataSlicerIndex *self, GPtrArray *tuples, GPtrArray *bitmaps);
+};
 
 GType go_data_slicer_index_get_type (void);
 
@@ -73,7 +79,7 @@ GType go_data_slicer_index_get_type (void);
  * @return a GPtrArray of go-data-cache-fields representing this SlicerIndex's tuple template.
  */
 GPtrArray * 
-go_data_slicer_index_get_tuple_template (GODataSlicerIndex *self);
+go_data_slicer_index_get_tuple_template (const GODataSlicerIndex *self);
 
 /**
  * set_tuple_template
@@ -113,9 +119,21 @@ go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_
  * @param tuple - the GODataSlicerTuple to search for
  * @return the bitmap associated with tuple, or NULL if the tuple does not exist
  */
-/*TODO: uncomment after impelementing referenced classes*/
-/*GODataSlicerBitmap * 
-go_data_slicer_index_retrieve_bitmap (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple);*/
+GODataSlicerBitmap * 
+go_data_slicer_index_retrieve_bitmap (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple);
+
+/**
+ * retrieve_all_bitmaps
+ *
+ * Returns all bitmaps and tuples indexed by this SlicerIndex in sorted order
+ * (by tuple).
+ *
+ * @param self - this GODataSlicerIndex
+ * @param tuples - an empty GPtrArray to fill with tuples in sorted order
+ * @param bitmaps - an empty GPtrArray to fill with bitmaps such that the bitmap for tuple i in tuples is at position i in bitmaps.
+ */
+void
+go_data_slicer_index_retrieve_all_bitmaps (const GODataSlicerIndex *self, GPtrArray *tuples, GPtrArray *bitmaps);
 
 G_END_DECLS
 

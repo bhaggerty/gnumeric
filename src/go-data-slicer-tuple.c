@@ -25,7 +25,6 @@
 #include "go-data-cache-field.h"
 #include "go-data-cache-impl.h"
 #include "go-data-cache.h"
-#include "go-data-slicer-index.h"
 
 #include <gsf/gsf-impl-utils.h>
 #include <glib/gi18n-lib.h>

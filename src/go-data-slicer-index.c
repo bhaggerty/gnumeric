@@ -1,7 +1,8 @@
 /*
  * go-data-slicer-index.c :
  *
- * Copyright (C) 2010 Sean McIntyre (s.mcintyre@utoronto.ca)
+ * Copyright (C) 2010 Sean McIntyre <s.mcintyre@utoronto.ca> 
+ *                    David Algar   <david.algar@utoronto.ca>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of version 2 of the GNU General Public
@@ -41,7 +42,7 @@ go_data_slicer_index_get_type (void)
 }
 
 GPtrArray * 
-go_data_slicer_index_get_tuple_template (GODataSlicerIndex *self) {
+go_data_slicer_index_get_tuple_template (const GODataSlicerIndex *self) {
 	 g_return_val_if_fail (IS_GO_DATA_SLICER_INDEX(self), NULL);
 	 return GO_DATA_SLICER_INDEX_GET_INTERFACE (self)->get_tuple_template (self);
 }
@@ -58,9 +59,14 @@ go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_
 	 return GO_DATA_SLICER_INDEX_GET_INTERFACE (self)->index_record (self, record_num);
 }
 
-/*TODO: uncomment after impelementing referenced classes*/
-/*GODataSlicerBitmap * 
+GODataSlicerBitmap * 
 go_data_slicer_index_retrieve_bitmap (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple) {
 	 g_return_val_if_fail (IS_GO_DATA_SLICER_INDEX(self), NULL);
 	 return GO_DATA_SLICER_INDEX_GET_INTERFACE (self)->retrieve_bitmap (self, tuple);
-}*/
+}
+
+void
+go_data_slicer_index_retrieve_all_bitmaps (const GODataSlicerIndex *self, GPtrArray *tuples, GPtrArray *bitmaps) {
+    g_return_if_fail (IS_GO_DATA_SLICER_INDEX(self));
+    GO_DATA_SLICER_INDEX_GET_INTERFACE (self)->retrieve_all_bitmaps (self, tuples, bitmaps);
+}

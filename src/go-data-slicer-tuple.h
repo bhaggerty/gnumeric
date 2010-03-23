@@ -28,12 +28,11 @@
  * SlicerIndex.                                                                *
  *******************************************************************************/
 
-#ifndef _GO_DATA_SLICER_TUPLE_H_
-#define _GO_DATA_SLICER_TUPLE_H_
+#ifndef _GO_DATA_SLICER_TUPLE_H
+#define _GO_DATA_SLICER_TUPLE_H
 
 #include <glib-object.h>
 #include "go-data-cache-impl.h"
-#include "go-data-slicer-index.h"
 
 G_BEGIN_DECLS
 
@@ -47,6 +46,12 @@ G_BEGIN_DECLS
 typedef struct _GODataSlicerTupleClass GODataSlicerTupleClass;
 typedef struct _GODataSlicerTuple GODataSlicerTuple;
 
+/**Resolve circular dependency between this and go-data-slicer-index***********/
+G_END_DECLS
+#include "go-data-slicer-index.h"
+G_BEGIN_DECLS
+/******************************************************************************/
+
 struct _GODataSlicerTupleClass
 {
 	GObjectClass parent_class;
@@ -56,10 +61,10 @@ struct _GODataSlicerTuple
 {
 	GObject parent_instance;
 	GODataCache	*cache;
-	GODataSlicerIndex *slicer_index;	
+	GODataSlicerIndex *slicer_index;
 	unsigned int record_num;
 		
-	int (*compare_to) (GODataSlicerTuple * self, GODataSlicerTuple * other);
+	int (*compare_to) (const GODataSlicerTuple * self, const GODataSlicerTuple * other);
 };
 
 GType go_data_slicer_tuple_get_type (void) G_GNUC_CONST;
