@@ -333,7 +333,7 @@ go_data_slicer_bitmap_class_init (GODataSlicerBitmapClass *klass)
 	                                                      "max_uncompressed_blocks",
 	                                                      "Total number of uncompressed blocks which can be accommodated by this bitmap.",
 	                                                      0,G_MAXUINT,DEFAULT_MAX_UNCOMPRESSED_BLOCKS,
-	                                                      G_PARAM_READABLE | G_PARAM_CONSTRUCT));	
+	                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT));	
 }
 
 void

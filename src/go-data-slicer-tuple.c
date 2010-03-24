@@ -129,7 +129,7 @@ go_data_slicer_tuple_class_init (GODataSlicerTupleClass *klass)
 	                                                      -1,
 	                                                      UINT_MAX,
 	                                                      -1,
-	                                                      G_PARAM_READABLE | G_PARAM_CONSTRUCT_ONLY));
+	                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 }
 
 int go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other) {
