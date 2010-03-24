@@ -109,6 +109,7 @@ static void
 go_data_slicer_bitmap_block_set_compressed_flag(GODataSlicerBitmap *self, guint blocknum, gboolean is_compressed) {
 
 	guint8 blockmap_block, mask;
+	guint8 * element;
 	guint bin = blocknum/8;
 
 	/*make the bin for the blocknum-th bit, if it doesn't exist*/
@@ -129,8 +130,8 @@ go_data_slicer_bitmap_block_set_compressed_flag(GODataSlicerBitmap *self, guint 
 		blockmap_block = blockmap_block | mask;
 	}
 
-	g_array_append_val(self->block_map, blockmap_block);
-	g_array_remove_index_fast (self->block_map, bin); /*removes an element and replaces it with the last element*/
+	element = &g_array_index(self->block_map, guint8, bin);
+	*element = blockmap_block;
 }
 
 /**
@@ -371,6 +372,7 @@ go_data_slicer_bitmap_set_block (GODataSlicerBitmap * self, guint blocknum, guin
 
 	gboolean was_compressed;
 	guint real_blocknum;
+	guint32 * element;
 
 	/*Check to see if the block was already uncompressed*/
 	was_compressed = go_data_slicer_bitmap_block_is_compressed (self,blocknum);
@@ -397,8 +399,8 @@ go_data_slicer_bitmap_set_block (GODataSlicerBitmap * self, guint blocknum, guin
 			g_array_insert_val(self->blocks, real_blocknum, value);
 		} else {
 			/*replace the block*/
-			g_array_append_val(self->blocks, value);		
-			g_array_remove_index_fast (self->blocks,real_blocknum);
+			element = &g_array_index(self->blocks, guint32, real_blocknum);
+			*element = value;
 		}
 
 		/*mark this block as uncompressed in the block map*/

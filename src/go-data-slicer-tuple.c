@@ -123,7 +123,7 @@ go_data_slicer_tuple_class_init (GODataSlicerTupleClass *klass)
 	
 	g_object_class_install_property (object_class,
 	                                 PROP_RECORDNUM,
-	                                 g_param_spec_int    ("RECORDNUM",
+	                                 g_param_spec_int    ("record_num",
 	                                                      "record_num",
 	                                                      "The record in the cache this tuple draws values from.",
 	                                                      -1,
