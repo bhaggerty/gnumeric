@@ -134,16 +134,28 @@ go_data_slicer_tuple_class_init (GODataSlicerTupleClass *klass)
 
 int go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other) {
 	guint i, comparison;
-	GPtrArray * tuple_template;	
+	int parent;
+	GPtrArray * tuple_template;
+	const GOVal * selfVal;
+	const GOVal * otherVal;	
 	g_warn_if_fail(self->slicer_index == other->slicer_index);
-
+	g_warn_if_fail(self->cache == other->cache);
+	
 	/*Get the set of columns (types and values) for this (and others') tuple*/
 	tuple_template = GO_DATA_SLICER_INDEX_GET_INTERFACE(self->slicer_index)->get_tuple_template(self->slicer_index);
 	/*Iterate over tuple values, comparing left-to-right*/
-	comparison = 0;
+	comparison = 0; /*Assume equality and return appropriate value if any inequality is discovered*/
 	for (i=0;i<tuple_template->len;i++) {
 		GODataCacheField * column = g_ptr_array_index(tuple_template, i);
-		comparison = go_val_cmp(go_data_cache_field_get_val(column,self->record_num), go_data_cache_field_get_val(column, other->record_num));
+		/*Find base field if this is a grouped field*/
+		while (!go_data_cache_field_is_base(column)) {
+			g_object_get(column, "group-base", &parent, NULL);
+			column = go_data_cache_get_field(self->cache, parent);
+		}
+		/*Retrieve and compare values*/
+		selfVal = go_data_cache_field_get_val(column,self->record_num);
+		otherVal = go_data_cache_field_get_val(column, other->record_num);
+		comparison = go_val_cmp(selfVal, otherVal);
 		if (comparison != 0) return comparison;
 	}
 	return comparison;

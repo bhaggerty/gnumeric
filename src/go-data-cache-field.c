@@ -140,11 +140,11 @@ go_data_cache_field_class_init (GODataCacheFieldClass *klass)
 			GSF_PARAM_STATIC | G_PARAM_READWRITE));
 
 	/* Unclear how to select what is parent and what is child when dealing with groups */
-	g_object_class_install_property (gobject_class, PROP_GROUP_PARENT,
+	/*g_object_class_install_property (gobject_class, PROP_GROUP_PARENT,
 		 g_param_spec_int ("group-parent", NULL,
 			"Index to CacheField with higher precedence in the group ?",
 			-1, G_MAXINT, -1,
-			GSF_PARAM_STATIC | G_PARAM_READWRITE));
+			GSF_PARAM_STATIC | G_PARAM_READWRITE));*/
 
 	parent_klass = g_type_class_peek_parent (klass);
 }
