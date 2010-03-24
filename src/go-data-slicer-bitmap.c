@@ -75,7 +75,7 @@ go_data_slicer_bitmap_block_is_compressed(GODataSlicerBitmap *self, guint blockn
 	
 	/*if blocknum is outside of the range of the bitmap, return FALSE*/
 	if (blocknum >= self->block_map->len*8) {
-		return FALSE;
+		return TRUE;
 	} else {
 		/*Find the guint8 'bin' of block_map that the blocknum-th bit resides in*/
 		blockmap_block = g_array_index(self->block_map, guint8, blocknum/8);
@@ -114,8 +114,8 @@ go_data_slicer_bitmap_block_set_compressed_flag(GODataSlicerBitmap *self, guint 
 
 	/*make the bin for the blocknum-th bit, if it doesn't exist*/
 	if (bin >= self->block_map->len) {
-		g_object_set(self, "num_blocks", blocknum, NULL);
-	}
+		g_object_set(self, "num_blocks", blocknum+1, NULL);
+	}	
 
 	/*The guint8 'bin' the blocknum-th bit resides in*/
 	blockmap_block = g_array_index(self->block_map, guint8, bin);
@@ -183,7 +183,6 @@ go_data_slicer_bitmap_init (GODataSlicerBitmap *self)
 	self->max_uncompressed_blocks = DEFAULT_MAX_UNCOMPRESSED_BLOCKS;
 	self->block_map = g_array_sized_new(FALSE,TRUE,sizeof(guint8), (DEFAULT_MAX_BLOCKS%8 == 0 ? DEFAULT_MAX_BLOCKS/8 : (DEFAULT_MAX_BLOCKS/8 + 1)));
 	self->blocks = g_array_sized_new(FALSE, TRUE, sizeof(guint32), DEFAULT_MAX_UNCOMPRESSED_BLOCKS);
-
 	
 	/* hook up instance methods */
 	self->is_member = go_data_slicer_bitmap_is_member;
@@ -236,7 +235,7 @@ go_data_slicer_bitmap_set_property (GObject *object, guint prop_id, const GValue
 		/*Only allow block_map array to be expanded by multiples of 8*/
 		new_size = g_value_get_uint (value);
 	    new_size = new_size % 8 == 0 ? new_size/8 : (new_size/8) + 1;
-		old_size = self->max_blocks % 8 == 0 ? self->max_blocks/8 : (self->max_blocks/8)+1;
+		old_size = self->max_blocks % 8 == 0 ? self->max_blocks/8 : (self->max_blocks/8)+1;		
 		if (new_size > old_size) {
 			g_array_set_size(self->block_map, new_size);
 			self->max_blocks = g_value_get_uint (value);
@@ -349,14 +348,14 @@ go_data_slicer_bitmap_set_member (GODataSlicerBitmap * self, guint bitnum, gbool
 	if (was_compressed) {
 		if (is_member) {
 			/*the mask is the new uncompressed block*/
-			mask = 0x1 << (31-bitnum%32);
+			mask = 0x1 << (31-(bitnum%32));
 			go_data_slicer_bitmap_set_block (self,virt_blocknum,mask);
 		} else {
 			go_data_slicer_bitmap_set_block (self,virt_blocknum,0x0);
 		}
 	} else {
 		/*mask the existing block to get the new block*/
-		mask = 0x1 << (31-bitnum%32);
+		mask = 0x1 << (31-(bitnum%32));
 		old_val = g_array_index(self->blocks, guint32, go_data_slicer_bitmap_get_block_index (self, virt_blocknum));
 
 		if (is_member) {
@@ -463,3 +462,24 @@ go_data_slicer_bitmap_intersect_with (GODataSlicerBitmap * self, GODataSlicerBit
 
 	return result;
 }
+
+#ifdef GO_DEBUG_SLICERS
+void go_data_slicer_bitmap_dump_bitmap(GODataSlicerBitmap * self) {
+	guint i, numBlocks;
+	long t;
+	guint32 block;
+	g_object_get(self,"num_blocks", &numBlocks, NULL);
+	for (i=0;i<numBlocks;i++) {
+		block = self->get_block(self,i);
+		for (t=2147483648l;t>0;t/=2) {
+			if (block& t) {
+				g_printf("%c", '1');
+			} else {
+				g_printf("%c", '0');
+			}
+		}
+		g_printf("  ");
+	}
+	g_printf("\n\n");
+}
+#endif

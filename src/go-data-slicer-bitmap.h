@@ -66,7 +66,7 @@ struct _GODataSlicerBitmap
 	void (*set_member) (GODataSlicerBitmap * self, guint bitnum, gboolean is_member);
 	void (*set_block) (GODataSlicerBitmap * self, guint blocknum, guint32 value);
 	guint32 (*get_block) (GODataSlicerBitmap * self, guint blocknum);
-	GODataSlicerBitmap * (*intersect_with) (GODataSlicerBitmap * self, GODataSlicerBitmap * other);
+	GODataSlicerBitmap * (*intersect_with) (GODataSlicerBitmap * self, GODataSlicerBitmap * other);	
 };
 
 GType go_data_slicer_bitmap_get_type (void);
@@ -122,6 +122,10 @@ guint32 go_data_slicer_bitmap_get_block (GODataSlicerBitmap * self, guint blockn
  * @return - a new bitmap representing the result of the intersection.
  */
 GODataSlicerBitmap * go_data_slicer_bitmap_intersect_with (GODataSlicerBitmap * self, GODataSlicerBitmap * other);
+
+#ifdef GO_DEBUG_SLICERS
+void go_data_slicer_bitmap_dump_bitmap (GODataSlicerBitmap * self);
+#endif
 
 G_END_DECLS
 
