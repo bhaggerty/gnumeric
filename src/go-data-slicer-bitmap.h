@@ -62,8 +62,8 @@ struct _GODataSlicerBitmap
 	guint max_blocks;   /*The number of 32-bit blocks the memory size of this bitmap can accomodate*/
 	guint max_uncompressed_blocks;  /*The number of 32-bit blocks which can be uncompressed and used to store data without changing the memory size of this bitmap*/
 
-	gboolean (*is_member) (GODataSlicerBitmap * self, guint bitnum);
-	void (*set_member) (GODataSlicerBitmap * self, guint bitnum, gboolean is_member);
+	gboolean (*is_set) (GODataSlicerBitmap * self, guint bitnum);
+	void (*set_bit) (GODataSlicerBitmap * self, guint bitnum, gboolean is_member);
 	void (*set_block) (GODataSlicerBitmap * self, guint blocknum, guint32 value);
 	guint32 (*get_block) (GODataSlicerBitmap * self, guint blocknum);
 	GODataSlicerBitmap * (*intersect_with) (GODataSlicerBitmap * self, GODataSlicerBitmap * other);	
@@ -78,7 +78,7 @@ GType go_data_slicer_bitmap_get_type (void);
  * @param bitnum - the bit to check (zero-indexed)
  * @return true if bit bitnum is 1, false otherwise.
  */
-gboolean go_data_slicer_bitmap_is_member (GODataSlicerBitmap * self, guint bitnum);
+gboolean go_data_slicer_bitmap_is_set (GODataSlicerBitmap * self, guint bitnum);
 
 /**
  * set_member
@@ -87,7 +87,7 @@ gboolean go_data_slicer_bitmap_is_member (GODataSlicerBitmap * self, guint bitnu
  * @param bitnum - the bit to set (zero-indexed)
  * @param is_member - the value to assign to bitnum
  */
-void go_data_slicer_bitmap_set_member (GODataSlicerBitmap * self, guint bitnum, gboolean is_member);
+void go_data_slicer_bitmap_set_bit (GODataSlicerBitmap * self, guint bitnum, gboolean is_member);
 
 /**
  * set_block
@@ -123,7 +123,7 @@ guint32 go_data_slicer_bitmap_get_block (GODataSlicerBitmap * self, guint blockn
  */
 GODataSlicerBitmap * go_data_slicer_bitmap_intersect_with (GODataSlicerBitmap * self, GODataSlicerBitmap * other);
 
-#ifdef GO_DEBUG_SLICERS
+#ifdef DEBUG_BITMAP
 void go_data_slicer_bitmap_dump_bitmap (GODataSlicerBitmap * self);
 #endif
 

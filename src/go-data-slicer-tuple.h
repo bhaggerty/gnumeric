@@ -46,12 +46,6 @@ G_BEGIN_DECLS
 typedef struct _GODataSlicerTupleClass GODataSlicerTupleClass;
 typedef struct _GODataSlicerTuple GODataSlicerTuple;
 
-/**Resolve circular dependency between this and go-data-slicer-index***********/
-G_END_DECLS
-#include "go-data-slicer-index.h"
-G_BEGIN_DECLS
-/******************************************************************************/
-
 struct _GODataSlicerTupleClass
 {
 	GObjectClass parent_class;
@@ -61,9 +55,10 @@ struct _GODataSlicerTuple
 {
 	GObject parent_instance;
 	GODataCache	*cache;
-	GODataSlicerIndex *slicer_index;
+	GPtrArray *tuple_template;
 	unsigned int record_num;
-		
+	guint relative_position;
+	
 	int (*compare_to) (const GODataSlicerTuple * self, const GODataSlicerTuple * other);
 };
 

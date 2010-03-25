@@ -18,11 +18,10 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <gnumeric-config.h>
-#include <glib/gi18n-lib.h>
+#include <glib.h>
 #include "go-data-slicer-bitmap.h"
 
-#ifdef GO_DEBUG_SLICERS
+#ifdef DEBUG_BITMAP
 #include <glib/gprintf.h>
 #endif
 
@@ -185,8 +184,8 @@ go_data_slicer_bitmap_init (GODataSlicerBitmap *self)
 	self->blocks = g_array_sized_new(FALSE, TRUE, sizeof(guint32), DEFAULT_MAX_UNCOMPRESSED_BLOCKS);
 	
 	/* hook up instance methods */
-	self->is_member = go_data_slicer_bitmap_is_member;
-	self->set_member = go_data_slicer_bitmap_set_member;
+	self->is_set = go_data_slicer_bitmap_is_set;
+	self->set_bit = go_data_slicer_bitmap_set_bit;
 	self->set_block = go_data_slicer_bitmap_set_block;
 	self->get_block = go_data_slicer_bitmap_get_block;	
 	self->intersect_with = go_data_slicer_bitmap_intersect_with;
@@ -337,7 +336,7 @@ go_data_slicer_bitmap_class_init (GODataSlicerBitmapClass *klass)
 }
 
 void
-go_data_slicer_bitmap_set_member (GODataSlicerBitmap * self, guint bitnum, gboolean is_member)
+go_data_slicer_bitmap_set_bit (GODataSlicerBitmap * self, guint bitnum, gboolean is_member)
 {
 	gboolean was_compressed;
 	guint32 mask, old_val;	
@@ -416,7 +415,7 @@ guint32 go_data_slicer_bitmap_get_block (GODataSlicerBitmap * self, guint blockn
 }
 
 gboolean
-go_data_slicer_bitmap_is_member (GODataSlicerBitmap * self, guint bitnum)
+go_data_slicer_bitmap_is_set (GODataSlicerBitmap * self, guint bitnum)
 {
 	guint32 block, mask;
 
@@ -463,7 +462,7 @@ go_data_slicer_bitmap_intersect_with (GODataSlicerBitmap * self, GODataSlicerBit
 	return result;
 }
 
-#ifdef GO_DEBUG_SLICERS
+#ifdef DEBUG_BITMAP
 void go_data_slicer_bitmap_dump_bitmap(GODataSlicerBitmap * self) {
 	guint i, numBlocks;
 	long t;

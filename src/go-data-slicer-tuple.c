@@ -35,8 +35,9 @@ enum
 	PROP_0,
 
 	PROP_RECORDNUM,
+	PROP_RELPOSITION,
 	PROP_CACHE,
-	PROP_INDEX
+	PROP_TEMPLATE	
 };
 
 
@@ -47,15 +48,31 @@ static void
 go_data_slicer_tuple_init (GODataSlicerTuple *self)
 {
 	self->cache = NULL;
-	self->slicer_index = NULL;
+	self->tuple_template = NULL;
 	/* hook up instance methods */
 	self->compare_to = go_data_slicer_tuple_compare_to;
 	
 }
 
 static void
-go_data_slicer_tuple_finalize (GObject *self)
+go_data_slicer_tuple_dispose (GObject *object) 
 {
+	GODataSlicerTuple *self;
+	g_return_if_fail (IS_GO_DATA_SLICER_TUPLE (object));		
+	self = GO_DATA_SLICER_TUPLE(object); /*Cast object into our type*/
+
+	/*unref stuff from slicer*/
+    g_ptr_array_foreach(self->tuple_template, (GFunc)g_object_unref, NULL);  
+	
+	/*unref stuff from cache*/
+    g_object_unref(self->cache);
+	
+	G_OBJECT_CLASS (go_data_slicer_tuple_parent_class)->dispose(object);
+}
+
+static void
+go_data_slicer_tuple_finalize (GObject *self)
+{	
 	G_OBJECT_CLASS (go_data_slicer_tuple_parent_class)->finalize (self);
 }
 
@@ -69,13 +86,24 @@ go_data_slicer_tuple_set_property (GObject *object, guint prop_id, const GValue 
 	switch (prop_id)
 	{
 	case PROP_RECORDNUM:
-		self->record_num = g_value_get_int (value);
+		self->record_num = g_value_get_uint (value);
+		break;
+	case PROP_RELPOSITION:
+	    self->relative_position = g_value_get_uint(value);
 		break;
 	case PROP_CACHE:
+        if (self->cache) {
+            g_object_unref(self->cache); /*decrease reference count of old cache*/
+        }
 		self->cache = g_value_get_object (value);
+        g_object_ref(self->cache); /*increase reference count of new cache*/
 		break;
-	case PROP_INDEX:
-		self->slicer_index = g_value_get_object (value);
+	case PROP_TEMPLATE:
+		if (self->tuple_template) {
+            g_ptr_array_foreach(self->tuple_template, (GFunc)g_object_unref, NULL); /*decrease reference count of old template stuff*/            
+        }
+		self->tuple_template = g_value_get_pointer (value);
+        g_ptr_array_foreach(self->tuple_template, (GFunc)g_object_ref, NULL); /*increase reference count of new template stuff*/            
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -94,13 +122,16 @@ go_data_slicer_tuple_get_property (GObject *object, guint prop_id, GValue *value
 	switch (prop_id)
 	{
 	case PROP_RECORDNUM:
-		g_value_set_int(value, self->record_num);
+		g_value_set_uint(value, self->record_num);
+		break;
+	case PROP_RELPOSITION:			
+		g_value_set_uint(value, self->relative_position);
 		break;
 	case PROP_CACHE:
 		g_value_set_object (value, self->cache);
 		break;	
-	case PROP_INDEX:
-		g_value_set_object(value,self->slicer_index);
+	case PROP_TEMPLATE:
+		g_value_set_pointer(value,self->tuple_template);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -114,39 +145,51 @@ go_data_slicer_tuple_class_init (GODataSlicerTupleClass *klass)
 	GObjectClass* object_class = G_OBJECT_CLASS (klass);
 
 	object_class->finalize = go_data_slicer_tuple_finalize;
+	object_class->dispose = go_data_slicer_tuple_dispose;
 	object_class->set_property = go_data_slicer_tuple_set_property;
 	object_class->get_property = go_data_slicer_tuple_get_property;
 
 	g_object_class_install_property (object_class, PROP_CACHE,
 		 g_param_spec_object ("cache", NULL, NULL,
-			GO_DATA_CACHE_TYPE, GSF_PARAM_STATIC | G_PARAM_READWRITE));
+			GO_DATA_CACHE_TYPE, GSF_PARAM_STATIC | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+
+	g_object_class_install_property (object_class, PROP_TEMPLATE,
+	     g_param_spec_pointer ("tuple_template", NULL, NULL, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+			
 	
 	g_object_class_install_property (object_class,
 	                                 PROP_RECORDNUM,
-	                                 g_param_spec_int    ("record_num",
-	                                                      "record_num",
+	                                 g_param_spec_uint    ("record_num",
+	                                                      NULL,
 	                                                      "The record in the cache this tuple draws values from.",
 	                                                      -1,
 	                                                      UINT_MAX,
 	                                                      -1,
 	                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+
+	g_object_class_install_property (object_class,
+	                                 PROP_RELPOSITION,
+	                                 g_param_spec_uint    ("relative_position",
+	                                                      NULL,
+	                                                      "This tuple's position relative to other tuples in its slicer index which are sorted by tuple value.",
+	                                                      -1,
+	                                                      UINT_MAX,
+	                                                      -1,
+	                                                      G_PARAM_READWRITE));
 }
 
 int go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other) {
 	guint i, comparison;
 	int parent;
-	GPtrArray * tuple_template;
 	const GOVal * selfVal;
 	const GOVal * otherVal;	
-	g_warn_if_fail(self->slicer_index == other->slicer_index);
+	g_warn_if_fail(self->tuple_template == other->tuple_template);	
 	g_warn_if_fail(self->cache == other->cache);
 	
-	/*Get the set of columns (types and values) for this (and others') tuple*/
-	tuple_template = GO_DATA_SLICER_INDEX_GET_INTERFACE(self->slicer_index)->get_tuple_template(self->slicer_index);
 	/*Iterate over tuple values, comparing left-to-right*/
 	comparison = 0; /*Assume equality and return appropriate value if any inequality is discovered*/
-	for (i=0;i<tuple_template->len;i++) {
-		GODataCacheField * column = g_ptr_array_index(tuple_template, i);
+	for (i=0;i<self->tuple_template->len;i++) {
+		GODataCacheField * column = g_ptr_array_index(self->tuple_template, i);
 		/*Find base field if this is a grouped field*/
 		while (!go_data_cache_field_is_base(column)) {
 			g_object_get(column, "group-base", &parent, NULL);

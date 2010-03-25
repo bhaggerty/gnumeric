@@ -22,13 +22,12 @@
 
 /*******************************************************************************
  * GODataSlicerIndex                                                           *
- * An interface which describes the behaviour of a dictionary which maps keys  *
- * in the form of GODataSlicerTuples to sparse bitmaps which indicate the      *
- * records of the GODataCache which contain that tuple.                        *
- *                                                                             * 
- * This is an interface rather than an implementation so that the particular   *
- * data structure which underlies it may be easily swapped or improved in      *
- * the future.  We will be using a B+ tree to implement this interface.        *
+ *                                                                             *
+ * Organizes a set of tuples which represent a row field, a cache field, or a  *
+ * page field.  Maintains various representations of these tuples, including   *
+ * a representation sorted by tuple value as well as one sorted by each        *
+ * tuple's unique numerical index.  These representations allow the slicer in  *
+ * such tasks as sorting tuples, and identifying/eliminating duplicates.       *
  ******************************************************************************/
 
 #ifndef GO_DATA_SLICER_INDEX_H
@@ -44,10 +43,10 @@ G_BEGIN_DECLS
 #define IS_GO_DATA_SLICER_INDEX(o)	  (G_TYPE_CHECK_INSTANCE_TYPE ((o), GO_DATA_SLICER_INDEX_TYPE))
 #define GO_DATA_SLICER_INDEX_CLASS(k)	  (G_TYPE_CHECK_CLASS_CAST ((k), GO_DATA_SLICER_INDEX_TYPE, GODataSlicerIndexInterface))
 #define IS_GO_DATA_SLICER_INDEX_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), GO_DATA_SLICER_INDEX_TYPE))
-#define GO_DATA_SLICER_INDEX_GET_INTERFACE(o) (G_TYPE_INSTANCE_GET_INTERFACE ((o), GO_DATA_SLICER_INDEX_TYPE, GODataSlicerIndexInterface))
+#define GO_DATA_SLICER_INDEX_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GO_DATA_SLICER_INDEX_TYPE, GODataSlicerIndexClass))
 
-typedef struct _GODataSlicerIndex GODataSlicerIndex; /* dummy object */
-typedef struct _GODataSlicerIndexInterface GODataSlicerIndexInterface;
+typedef struct _GODataSlicerIndex GODataSlicerIndex;
+typedef struct _GODataSlicerIndexClass GODataSlicerIndexClass;
 
 /**Resolve circular dependency between this and go-data-slicer-tuple***********/
 G_END_DECLS
@@ -55,44 +54,29 @@ G_END_DECLS
 G_BEGIN_DECLS
 /******************************************************************************/
 
-struct _GODataSlicerIndexInterface {
-	GTypeInterface		   base;
+struct _GODataSlicerIndexClass {
+     GObjectClass parent_class;
+};
 
-	GPtrArray * (*get_tuple_template) (const GODataSlicerIndex *self);
-	void (*set_tuple_template) (GODataSlicerIndex *self, GPtrArray *tuple_template);
+struct _GODataSlicerIndex {
+	GObject parent_instance;
+
+    gboolean completed;  /*a flag which represents whether or not all cache rows that will be added to this SlicerIndex have been added*/
+   	GODataCache	*cache;  /*The cache associated with the slicer this slicer index belongs to*/
+    GPtrArray *tuple_template; /*an array of CacheField objects representing which values in a cache record belong to tuples in this SlicerIndex*/
+    GPtrArray *tuples; /*an array of Tuples sorted by the RECORDNUM property*/
+    GTree *tuples_tree; /*a tree which essentially indexes the tuples array by tuple value rather than RECORDNUM*/
+
 	void (*index_record) (GODataSlicerIndex *self, unsigned int record_num);
-	GODataSlicerBitmap * (*retrieve_bitmap) (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple);
-    void (*retrieve_all_bitmaps) (const GODataSlicerIndex *self, GPtrArray *tuples, GPtrArray *bitmaps);
+    void (*complete_index) (GODataSlicerIndex *self);
+    void (*tuple_set_enabled) (GODataSlicerIndex *self, unsigned int tuple_record_num, gboolean is_enabled);
+    void (*disable_all_tuples) (GODataSlicerIndex *self);
+    guint (*get_tuple_index) (const GODataSlicerIndex *self, unsigned int tuple_record_num);
+    GPtrArray * (*get_all_tuples) (const GODataSlicerIndex *self);
 };
 
 GType go_data_slicer_index_get_type (void);
 
-
-/**
- * get_tuple_template
- * 
- * Returns an array of pointers to go-data-cache-field objects which
- * represent the ordered set of fields which tuples in this index draw values
- * from.
- *
- * @param self - this GODataSlicerIndex
- * @return a GPtrArray of go-data-cache-fields representing this SlicerIndex's tuple template.
- */
-GPtrArray * 
-go_data_slicer_index_get_tuple_template (const GODataSlicerIndex *self);
-
-/**
- * set_tuple_template
- * 
- * Sets the tuple template of this SlicerIndex to tuple_template.
- * PRECONDITION: the go-data-cache-fields in tuple_template belong to this
- * SlicerIndex's cache.
- *
- * @param self - this GODataSlicerIndex
- * @param tuple_template - a GPtrArray of go-data-cache-fields
- */
-void 
-go_data_slicer_index_set_tuple_template (GODataSlicerIndex *self, GPtrArray *tuple_template);
 
 /**
  * index_record
@@ -100,8 +84,7 @@ go_data_slicer_index_set_tuple_template (GODataSlicerIndex *self, GPtrArray *tup
  * Given a record number from the cache this SlicerIndex is associated with,
  * process the record to form a key tuple (by choosing fields according to this
  * this SlicerIndex's tuple template), and then perform an insertion for that
- * record.  Create the tuple and associated bitmap if necessary, otherwise, find
- * it and change the bit for record_num to a 1.
+ * record.
  *
  * @param self - this GODataSlicerIndex
  * @param record_num - the record number within the cache to process.  Must be less than the total number of records in the cache.
@@ -110,30 +93,54 @@ void
 go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_num);
 
 /**
- * retrieve_bitmap
+ * complete_index
+ *
+ * Used to make this index (essentially) immutable when all cache rows have 
+ * been processed.  At this point, the various indexes of tuples will be 
+ * finished up (mostly numbering stuff).
  * 
- * Given a tuple which is compatible with this SlicerIndex (same length and 
- * field types), return the bitmap which is associated with tuple.
- *
- * @param self - this GODataSlicerIndex
- * @param tuple - the GODataSlicerTuple to search for
- * @return the bitmap associated with tuple, or NULL if the tuple does not exist
- */
-GODataSlicerBitmap * 
-go_data_slicer_index_retrieve_bitmap (const GODataSlicerIndex *self, const GODataSlicerTuple *tuple);
-
-/**
- * retrieve_all_bitmaps
- *
- * Returns all bitmaps and tuples indexed by this SlicerIndex in sorted order
- * (by tuple).
- *
- * @param self - this GODataSlicerIndex
- * @param tuples - an empty GPtrArray to fill with tuples in sorted order
- * @param bitmaps - an empty GPtrArray to fill with bitmaps such that the bitmap for tuple i in tuples is at position i in bitmaps.
  */
 void
-go_data_slicer_index_retrieve_all_bitmaps (const GODataSlicerIndex *self, GPtrArray *tuples, GPtrArray *bitmaps);
+go_data_slicer_index_complete_index (GODataSlicerIndex *self);
+
+
+/**
+ * get_tuple_index
+ *
+ * Given a tuple, identified by its record_num, return its position relative to
+ * other tuples in this SlicerIndex sorted by tuple value.
+ */
+guint
+go_data_slicer_index_get_tuple_index (const GODataSlicerIndex *self, unsigned int tuple_record_num);
+
+/**
+ * tuple_set_enabled
+ *
+ * Given a tuple, identified by its record_num, enable or disable it based on
+ * filters (as instructed by the Slicer).
+ */
+void
+go_data_slicer_index_tuple_set_enabled (GODataSlicerIndex *self, unsigned int tuple_record_num, gboolean is_enabled);
+
+/**
+ * disable_all_tuples
+ *
+ * Disable all tuples in this SlicerIndex, as though they had been disabled 
+ * by filters.  They will be re-enabled by the Slicer as they are encountered
+ * (in the situation where, for example, some filters are changed and the
+ * whole Slicer has to recalculate all of its values).
+ */
+void
+go_data_slicer_index_disable_all_tuples (GODataSlicerIndex *self);
+
+/**
+ * get_all_tuples
+ *
+ * Return all tuples in this SlicerIndex, sorted by tuple values, except for
+ * those ones which are disabled by Page Filters.
+ */
+GPtrArray *
+go_data_slicer_index_get_all_tuples (const GODataSlicerIndex *self);
 
 G_END_DECLS
 
