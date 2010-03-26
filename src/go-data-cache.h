@@ -47,6 +47,9 @@ void	     go_data_cache_set_val   (GODataCache *dc,
 				      int field, unsigned int record_num, GOVal *v);
 int	     go_data_cache_get_index (GODataCache const *dc,
 				      GODataCacheField const *field, unsigned int record_num);
+void go_data_cache_build_cache(GODataCache * cache, Sheet *sheet, GnmRange * cellRange);
+void go_data_cache_create_all_fields(GODataCache * cache, Sheet * sheet, GPtrArray *hashedIdx, GnmRange * cellRange);
+
 
 /* Data Access */
 unsigned int	  go_data_cache_num_items  (GODataCache const *dc);
@@ -63,6 +66,7 @@ void go_data_cache_dump (GODataCache *dc,
 			 GArray const *field_order,
 			 GArray const *permutation);
 void go_data_cache_dump_value (GOVal const *v);
+void go_data_cache_dump_hash_table(GHashTable* ht);
 
 G_END_DECLS
 
