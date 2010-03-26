@@ -23,6 +23,11 @@
 #include "go-data-cache-impl.h"
 #include "go-data-cache-source.h"
 #include "go-data-cache-field-impl.h"
+#include "value.h"
+#include "cell.h"
+#include "go-val.h"
+#include "go-data-cache-field.h"
+#include "sheet.h"
 
 #include <gsf/gsf-impl-utils.h>
 #include <glib/gi18n-lib.h>
@@ -445,6 +450,216 @@ go_data_cache_get_index (GODataCache const *cache,
 	}
 	return -1;
 }
+
+
+/* Distinguish between the same value with different formats */
+static gboolean
+formatted_value_equal (GnmValue const *a, GnmValue const *b)
+{
+	return value_equal (a, b) && (VALUE_FMT(a) == VALUE_FMT(b));
+}
+
+
+typedef struct {
+	gboolean has_blank;
+	GHashTable *hash;
+	GODateConventions const *date_conv;
+	Sheet *src_sheet;
+} UniqueCollection;
+
+/**
+ * Adds the GnmVal value from GnmCellIter iter to the given hash table if it is not 
+ * already in it.
+ * To be used in cunjunction with sheet_foreach_cell() in order to create
+ * an array and a hash table of unique values for a specified cell range.
+ * @param iter
+ * @param userData
+ * @return A GHashTable and a GOValArray with unique values.
+ */
+static GnmValue *
+go_data_cache_collect_content (GnmCellIter const *iter, gpointer userData)
+{
+	// Seperate userData into respective arguments.
+	// uc is a container for the hash table.
+	UniqueCollection * uc = ((UniqueCollection **) userData)[0];
+	// index is the array of unique values.
+	GOValArray * indexed = ((GOValArray **) userData)[1];
+	// intArr is the numrows and limit.
+	int * intArr = ((int **) userData)[2];
+
+	GnmCell const *cell = (iter->pp.sheet == uc->src_sheet) ? iter->cell
+		: sheet_cell_get (uc->src_sheet,
+			iter->pp.eval.col, iter->pp.eval.row);
+	if (gnm_cell_is_blank (cell))
+		uc->has_blank = TRUE;
+	else {
+		
+		GnmValue const *v   = cell->value;
+		// Check that the GnmValue v is not already in the hash table.
+		if (g_hash_table_lookup (uc->hash, v) == NULL) {
+			guint hashSize = g_hash_table_size (uc->hash);
+			int numRows = intArr[0];
+
+			// Find the limits for varying index sizes.
+			if (hashSize + 1 == (1<<8)) {
+				intArr[1] = go_data_cache_max_unique_for_indexed(16, numRows);
+			} else if (hashSize + 1 == (1<<16)) {
+				intArr[1] = go_data_cache_max_unique_for_indexed(32, numRows);
+			}
+
+			// If size of hash is larger than limit, we can stop finding unique
+			// values since this cache field will be set as inline.
+			int maxUniqueForIndexed = intArr[1];
+			if (hashSize + 1 > maxUniqueForIndexed) {
+				return 1;
+			}
+
+			GnmValue *vClone = value_dup (v);
+			g_ptr_array_add(indexed, vClone);	
+			gpointer * value = (gpointer *) g_malloc(sizeof(gpointer));
+			*value = GUINT_TO_POINTER(hashSize);
+			g_hash_table_replace (uc->hash, vClone, value);
+		}
+	}
+	return NULL;
+}
+
+void 
+dumpHashTableForEach(gpointer key, gpointer value, gpointer userData) {
+	value_dump((GnmValue *)key);
+	printf("Value: %d\n", GPOINTER_TO_INT(*((gpointer *)value)));
+}
+
+void 
+go_data_cache_dump_hash_table(GHashTable* ht) {
+	printf("HASH TABLE DUMP\n");
+	gpointer userData;
+	g_hash_table_foreach(ht, (GHFunc) &dumpHashTableForEach, userData);
+}
+
+/**
+ * Finds the limit of indexed elements such that if number of indexed elements greater
+ * than limit, this cache field such be set as inline.
+ * @param cacheFieldSize The size of index used in number of bits.
+ * @param numRows The number of rows in the cell range.
+ * @return An integer whoses values represents the max number of indexed elements in a column.
+ */
+int 
+go_data_cache_max_unique_for_indexed(int cacheFieldSize, int numRows) {
+	// Memory saved by using indices divided by size of GnmValue pointer.
+	return numRows * ((8 * sizeof(GnmValue *)) - cacheFieldSize) / (8 * sizeof(GnmValue *));
+}
+
+/**
+ * Creates the cache fields with elements in the range of cellRange from given Sheet sheet
+ * and attaches them to the given GODataCache cache.
+ * @param cache The GODataCache to store the values in.
+ * @param sheet The sheet containing values to be stored in the cache.
+ * @param hashedIdx The array of hash tables that contains the unique values for each indexed cache field.
+ * @param cellRange The range of cells in respect to the sheet to store in the cache.
+ */
+void 
+go_data_cache_create_all_fields(GODataCache * cache, Sheet * sheet, GPtrArray *hashedIdx, GnmRange * cellRange) {
+	int col;
+	for (col = cellRange->start.col; col <= cellRange->end.col; col++) {
+		int numRows = cellRange->end.row - cellRange->start.row + 1;
+
+		UniqueCollection uc;
+		uc.has_blank = FALSE;
+		uc.hash = g_hash_table_new_full ((GHashFunc)value_hash, (GEqualFunc)formatted_value_equal,
+			(GDestroyNotify)value_release, (GDestroyNotify)g_free);
+		uc.src_sheet = sheet;
+		uc.date_conv = workbook_date_conv (uc.src_sheet->workbook);
+		
+		// Set up arguments to pass to unique filter.
+		int intArr[2];
+		intArr[0] = numRows;
+		// Find limit for 8 bit indices here to save time computing later.
+		intArr[1] = go_data_cache_max_unique_for_indexed(8, numRows);
+		GOValArray * indexed = g_ptr_array_new();
+		gpointer * userData = (gpointer *) g_malloc(sizeof(gpointer) * 3);
+		
+		// UniqueCollection containing hash table of unique values.
+		((UniqueCollection **)userData)[0] = &uc;
+		// GOValArray of unique values.
+		((GOValArray **)userData)[1] = indexed;
+		// Array containing number of rows and limit.
+		((int **)userData)[2] = intArr;
+		
+		// Apply the unique filter to each cell in the range.
+		int inLine = sheet_foreach_cell_in_range (sheet, CELL_ITER_IGNORE_HIDDEN,
+				col, cellRange->start.row, col, cellRange->end.row,
+				(CellIterFunc)&go_data_cache_collect_content, userData);
+		g_free(userData);
+
+		if(inLine) {
+			indexed = NULL;
+		}
+
+		//go_data_cache_dump_hash_table(uc.hash);
+		g_ptr_array_add(hashedIdx, uc.hash);
+
+		// Create the data cache field.
+		GODataCacheField * tempCacheField = g_object_new(GO_DATA_CACHE_FIELD_TYPE, NULL);	
+
+		// Configure the data cache field.
+		go_data_cache_field_set_vals (tempCacheField, FALSE, indexed);
+
+		// Add the cache field to the cache.
+		go_data_cache_add_field(cache, tempCacheField);
+	}
+}
+
+/**
+ * Builds the GODataCache cache given the Sheet sheet. At this point cache should
+ * have its cache fields already added to it.
+ * @param cache The GODataCache with its cache fields already added.
+ * @param sheet The sheet containing elements to add to the cache.
+ * @param cellRange The range of cells in respect to the sheet to store in the cache.
+ */
+void 
+go_data_cache_build_cache(GODataCache * cache, Sheet *sheet, GnmRange * cellRange){
+	// Create all the cache fields first.
+	GPtrArray *hashedIdx = g_ptr_array_new ();
+	go_data_cache_create_all_fields(cache, sheet, hashedIdx, cellRange);
+	
+	unsigned int numRows = cellRange->end.row - cellRange->start.row + 1;
+	go_data_cache_import_start(cache, numRows);
+	
+	int i; // column
+	int next = 0; // There is no hash table for inline columns
+	for (i = 0; i < cache->fields->len; i++) {
+		GODataCacheField * f = g_ptr_array_index(cache->fields, i);
+		int j; //row
+		// If the cache field is inline.
+		if (f->ref_type == GO_DATA_CACHE_FIELD_TYPE_INLINE) {
+			for (j = 0; j < numRows; j++) {	
+				GnmValue *val = (sheet_cell_get(sheet,i,j))->value;
+				go_data_cache_set_val(cache, i, j, val);
+			}
+		// If the cache field is indexed.
+		} else {
+			GHashTable *hIdx = g_ptr_array_index(hashedIdx, next);
+			next++;
+			for (j = 0; j < numRows; j++) {
+				GnmValue *val = (sheet_cell_get(sheet,i,j))->value;
+				//unsigned int idx = go_data_cache_field_index(f, val);
+				gpointer value = g_hash_table_lookup(hIdx, val);
+				// If the cell has no value.
+				if (value == NULL) {
+					go_data_cache_set_val(cache, i, j, NULL);
+				} else {
+					unsigned int idx = GPOINTER_TO_INT(*((gpointer *)value));
+					go_data_cache_set_index(cache, i, j, idx);
+				}
+	
+			}
+		}		
+	}
+	// May want to change to actual number of allocated records rather than numRows.
+	go_data_cache_import_done(cache, numRows);
+}
+
 
 typedef struct {
 	GODataCache const *cache;

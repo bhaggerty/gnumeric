@@ -73,9 +73,9 @@ gdcs_allocate (GODataCacheSource const *src)
 			}
 		}
 	}
-
+	
 	res = g_object_new (GO_DATA_CACHE_TYPE, NULL);
-
+	go_data_cache_build_cache(res, gdcs->src_sheet, &(gdcs->src_range));
 	return res;
 }
 
