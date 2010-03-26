@@ -80,6 +80,8 @@ libspreadsheet_la_SOURCES =			\
 	go-data-slicer-tuple.c		\
 	go-data-slicer-bitmap.h     \
 	go-data-slicer-bitmap.c     \
+	go-data-slicer-cache-overlay.h  \
+	go-data-slicer-cache-overlay.c  \
 	\
 	gnm-data-cache-source.h 	\
 	gnm-data-cache-source.c 	\
@@ -193,7 +195,7 @@ libspreadsheet_la_SOURCES =			\
 	xml-sax-write.c				\
 	gnumeric-gconf.c			\
 	print.c					\
-	print-cell.c            
+	print-cell.c
 
 # When we switch to subversion fix this to nest as
 # libspreadsheet-ver/spreadsheet/header

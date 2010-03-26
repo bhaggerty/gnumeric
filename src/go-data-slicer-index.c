@@ -34,6 +34,38 @@ enum
     PROP_COMPLETED  /*a flag which represents whether or not all cache rows that will be added to this SlicerIndex have been added*/
 };
 
+static GODataSlicerIndexedTuple *
+go_data_slicer_index_get_indexed_tuple_by_tuple_record_num(const GODataSlicerIndex *self, unsigned int tuple_record_num) {         
+          
+    guint lower = 0;
+    guint upper = MIN(tuple_record_num, self->tuples->len-1);
+    guint pivot = self->tuples->len/2;
+    GODataSlicerIndexedTuple * pivot_tuple;
+
+    g_return_val_if_fail(self->completed==TRUE,NULL);
+     
+    /*We know that the tuples array is sorted by record_num in ascending order
+      so we can binary search for the desired tuple to set its flag*/
+    pivot_tuple = g_ptr_array_index(self->tuples,pivot);    
+    while (pivot_tuple->tuple->record_num != tuple_record_num) {
+        if (tuple_record_num < pivot_tuple->tuple->record_num) {
+             upper = pivot-1;
+             pivot = (upper+lower)/2;
+             pivot_tuple = g_ptr_array_index(self->tuples,pivot);
+        } else if (tuple_record_num > pivot_tuple->tuple->record_num) {
+             lower = pivot+1;
+             pivot = (upper+lower)/2;
+             pivot_tuple = g_ptr_array_index(self->tuples,pivot);
+        } else if ((upper == lower) && (tuple_record_num != pivot_tuple->tuple->record_num)) {
+             return NULL;
+        } else {
+             break;
+        }
+    }
+    return pivot_tuple;
+}
+
+
 G_DEFINE_TYPE (GODataSlicerIndex, go_data_slicer_index, G_TYPE_OBJECT);
 
 static void
@@ -42,8 +74,8 @@ go_data_slicer_index_init (GODataSlicerIndex *self)
     self->completed = FALSE;
 	self->cache = NULL;
 	self->tuple_template = NULL;
-    self->tuples = NULL;
-    self->tuples_tree = NULL;
+    self->tuples = g_ptr_array_new();
+    self->tuples_tree = g_tree_new((GCompareFunc)go_data_slicer_tuple_compare_to);
 	/* hook up instance methods */
 	self->index_record = go_data_slicer_index_index_record;
 	self->complete_index = go_data_slicer_index_complete_index;
@@ -56,14 +88,19 @@ go_data_slicer_index_init (GODataSlicerIndex *self)
 static void
 go_data_slicer_index_dispose (GObject *object) 
 {
+    guint i;
+    GODataSlicerIndexedTuple * indexed_tuple;
     GODataSlicerIndex *self;
     g_return_if_fail (IS_GO_DATA_SLICER_INDEX (object));	
 	self = GO_DATA_SLICER_INDEX(object); /*Cast object into our type*/     
 
     /*unref stuff we built
       Note that we dont have to unref tuples twice since we didn't ref them
-      when we put them in the tree*/
-    g_ptr_array_foreach(self->tuples, (GFunc)g_object_unref, NULL);
+      when we put them in the tree - the array 'holds' the reference.*/
+    for (i=0;i<self->tuples->len;i++) {
+         indexed_tuple = (GODataSlicerIndexedTuple *) g_ptr_array_index(self->tuples,i);
+         g_object_unref(indexed_tuple->tuple);
+    }
 
     /*unref stuff from slicer*/
     g_ptr_array_foreach(self->tuple_template, (GFunc)g_object_unref, NULL);     
@@ -162,33 +199,105 @@ go_data_slicer_index_class_init (GODataSlicerIndexClass *klass)
          g_param_spec_boolean ("completed", NULL, NULL, FALSE, G_PARAM_READWRITE));
 }
 
-void 
+unsigned int
 go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_num) {
-	 g_return_if_fail(IS_GO_DATA_SLICER_INDEX(self));
-	 /*TODO: implement - BE SURE TO EITHER MAKE A NEW TUPLE AND THEN DO NOT g_object_ref IT WHEN PUTTING IT IN THE TREE!*/
+     GODataSlicerIndexedTuple new_indexed_tuple;
+     GODataSlicerIndexedTuple * existing_tuple;
+     GODataSlicerTuple * new_tuple;
+
+     g_warn_if_fail(self->completed == FALSE);
+     
+     /*Create a tuple to represent the record record_num*/     
+     new_tuple = g_object_new(GO_DATA_SLICER_TUPLE_TYPE, "cache", self->cache, "tuple_template", self->tuple_template, "record_num", record_num, NULL);
+     /*Search for tuple in the tree*/
+     existing_tuple = g_tree_lookup(self->tuples_tree, new_tuple);
+     if (existing_tuple) {
+          /*if it's found, return its record_num*/
+          return existing_tuple->tuple->record_num;
+     } else {
+          /*if it isn't found, create it and perform insertions*/
+          new_indexed_tuple.enabled = TRUE;  /*enable tuples by default*/
+          new_indexed_tuple.relative_position = 0;
+          new_indexed_tuple.tuple = new_tuple;
+          g_ptr_array_add(self->tuples, &new_indexed_tuple);
+          g_tree_insert(self->tuples_tree, new_tuple, &new_indexed_tuple);
+          return new_tuple->record_num;
+     }
+}
+
+static void
+tuples_tree_traversal_function (gconstpointer key, gconstpointer value, gpointer user_data) {
+     GPtrArray * accumulator = (GPtrArray *) user_data;
+     GODataSlicerIndexedTuple * indexed_tuple = (GODataSlicerIndexedTuple *) value;
+     g_ptr_array_add(accumulator, indexed_tuple);
 }
 
 void
 go_data_slicer_index_complete_index (GODataSlicerIndex *self) {
-     /*TODO: implement*/  
+    guint i;
+    GODataSlicerIndexedTuple * tuple;
+    GPtrArray * accumulator;
+
+    g_return_if_fail(self->completed == FALSE);
+     
+    accumulator = g_ptr_array_sized_new(g_tree_nnodes(self->tuples_tree));
+    g_tree_foreach(self->tuples_tree, (GTraverseFunc) tuples_tree_traversal_function, accumulator);
+
+    for(i=0;i<accumulator->len;i++) {
+         tuple = (GODataSlicerIndexedTuple *) g_ptr_array_index(accumulator,i);
+         tuple->relative_position = i;
+    }
+
+    self->completed = TRUE; /*Complete this slicer index, making it immutable*/
+    g_ptr_array_free(accumulator, TRUE); /*Free up the accumulator array*/
 }
 
 void
 go_data_slicer_index_tuple_set_enabled (GODataSlicerIndex *self, unsigned int tuple_record_num, gboolean is_enabled) {
-     /*TODO: implement*/     
+    GODataSlicerIndexedTuple * tuple = go_data_slicer_index_get_indexed_tuple_by_tuple_record_num(self,tuple_record_num);
+
+    if (tuple) {
+         tuple->enabled = is_enabled;
+    }
 }
 
 void
 go_data_slicer_index_disable_all_tuples (GODataSlicerIndex *self) {
-     /*TODO: implement*/     
+    guint i;
+    GODataSlicerIndexedTuple * indexed_tuple;
+    for (i=0;i<self->tuples->len;i++) {
+         indexed_tuple = (GODataSlicerIndexedTuple *) g_ptr_array_index(self->tuples, i);
+         indexed_tuple->enabled = FALSE;
+    }
 }
 
 guint
 go_data_slicer_index_get_tuple_index (const GODataSlicerIndex *self, unsigned int tuple_record_num) {
-     /*TODO: implement*/     
+    GODataSlicerIndexedTuple * tuple;     
+    g_warn_if_fail(self->completed == TRUE);
+
+    tuple = go_data_slicer_index_get_indexed_tuple_by_tuple_record_num(self, tuple_record_num);
+    return tuple->relative_position;
 }
 
 GPtrArray *
-go_data_slicer_index_get_all_tuples (const GODataSlicerIndex *self) {
-     /*TODO: implement*/
+go_data_slicer_index_get_all_tuples (const GODataSlicerIndex *self) {     
+    guint i;
+    GODataSlicerIndexedTuple * indexed_tuple;
+    GPtrArray * accumulator = g_ptr_array_sized_new(g_tree_nnodes(self->tuples_tree));
+    GPtrArray * result = g_ptr_array_new();
+     
+    g_return_val_if_fail(self->completed == TRUE, NULL);
+
+    g_tree_foreach(self->tuples_tree, (GTraverseFunc) tuples_tree_traversal_function, accumulator);
+
+    for(i=0;i<accumulator->len;i++) {
+        indexed_tuple = (GODataSlicerIndexedTuple *) g_ptr_array_index(accumulator,i);
+        if (indexed_tuple->enabled) {
+             g_ptr_array_add(result, indexed_tuple->tuple);
+             /*Increase reference count to that tuple since someone else will be using it*/
+             g_object_ref(indexed_tuple->tuple);
+        }
+    }
+    return result;
 }

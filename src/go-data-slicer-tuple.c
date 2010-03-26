@@ -35,7 +35,6 @@ enum
 	PROP_0,
 
 	PROP_RECORDNUM,
-	PROP_RELPOSITION,
 	PROP_CACHE,
 	PROP_TEMPLATE	
 };
@@ -88,9 +87,6 @@ go_data_slicer_tuple_set_property (GObject *object, guint prop_id, const GValue 
 	case PROP_RECORDNUM:
 		self->record_num = g_value_get_uint (value);
 		break;
-	case PROP_RELPOSITION:
-	    self->relative_position = g_value_get_uint(value);
-		break;
 	case PROP_CACHE:
         if (self->cache) {
             g_object_unref(self->cache); /*decrease reference count of old cache*/
@@ -123,9 +119,6 @@ go_data_slicer_tuple_get_property (GObject *object, guint prop_id, GValue *value
 	{
 	case PROP_RECORDNUM:
 		g_value_set_uint(value, self->record_num);
-		break;
-	case PROP_RELPOSITION:			
-		g_value_set_uint(value, self->relative_position);
 		break;
 	case PROP_CACHE:
 		g_value_set_object (value, self->cache);
@@ -166,19 +159,9 @@ go_data_slicer_tuple_class_init (GODataSlicerTupleClass *klass)
 	                                                      UINT_MAX,
 	                                                      -1,
 	                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
-
-	g_object_class_install_property (object_class,
-	                                 PROP_RELPOSITION,
-	                                 g_param_spec_uint    ("relative_position",
-	                                                      NULL,
-	                                                      "This tuple's position relative to other tuples in its slicer index which are sorted by tuple value.",
-	                                                      -1,
-	                                                      UINT_MAX,
-	                                                      -1,
-	                                                      G_PARAM_READWRITE));
 }
 
-int go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other) {
+gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other) {
 	guint i, comparison;
 	int parent;
 	const GOVal * selfVal;

@@ -35,6 +35,7 @@
 
 #include <glib-object.h>
 #include "go-data-slicer-bitmap.h"
+#include "go-data-slicer-tuple.h"
 
 G_BEGIN_DECLS
 
@@ -45,14 +46,15 @@ G_BEGIN_DECLS
 #define IS_GO_DATA_SLICER_INDEX_CLASS(k)  (G_TYPE_CHECK_CLASS_TYPE ((k), GO_DATA_SLICER_INDEX_TYPE))
 #define GO_DATA_SLICER_INDEX_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GO_DATA_SLICER_INDEX_TYPE, GODataSlicerIndexClass))
 
+typedef struct {
+    gboolean enabled;           /*Whether or not this tuple is enabled with respect to filters*/
+	guint relative_position;    /*The position of this tuple relative to other tuples in this SlicerIndex when sorted by tuple values*/
+    GODataSlicerTuple * tuple;  /*The tuple*/
+} GODataSlicerIndexedTuple;
+
 typedef struct _GODataSlicerIndex GODataSlicerIndex;
 typedef struct _GODataSlicerIndexClass GODataSlicerIndexClass;
 
-/**Resolve circular dependency between this and go-data-slicer-tuple***********/
-G_END_DECLS
-#include "go-data-slicer-tuple.h"
-G_BEGIN_DECLS
-/******************************************************************************/
 
 struct _GODataSlicerIndexClass {
      GObjectClass parent_class;
@@ -64,10 +66,10 @@ struct _GODataSlicerIndex {
     gboolean completed;  /*a flag which represents whether or not all cache rows that will be added to this SlicerIndex have been added*/
    	GODataCache	*cache;  /*The cache associated with the slicer this slicer index belongs to*/
     GPtrArray *tuple_template; /*an array of CacheField objects representing which values in a cache record belong to tuples in this SlicerIndex*/
-    GPtrArray *tuples; /*an array of Tuples sorted by the RECORDNUM property*/
+    GPtrArray *tuples; /*an array of IndexedTuples sorted by the RECORDNUM property*/
     GTree *tuples_tree; /*a tree which essentially indexes the tuples array by tuple value rather than RECORDNUM*/
 
-	void (*index_record) (GODataSlicerIndex *self, unsigned int record_num);
+	unsigned int (*index_record) (GODataSlicerIndex *self, unsigned int record_num);
     void (*complete_index) (GODataSlicerIndex *self);
     void (*tuple_set_enabled) (GODataSlicerIndex *self, unsigned int tuple_record_num, gboolean is_enabled);
     void (*disable_all_tuples) (GODataSlicerIndex *self);
@@ -88,8 +90,9 @@ GType go_data_slicer_index_get_type (void);
  *
  * @param self - this GODataSlicerIndex
  * @param record_num - the record number within the cache to process.  Must be less than the total number of records in the cache.
+ * @return - the new (or existing) tuple's 
  */
-void 
+guint 
 go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_num);
 
 /**
@@ -99,6 +102,7 @@ go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_
  * been processed.  At this point, the various indexes of tuples will be 
  * finished up (mostly numbering stuff).
  * 
+ * @param self - this GODataSlicerIndex
  */
 void
 go_data_slicer_index_complete_index (GODataSlicerIndex *self);
@@ -109,8 +113,12 @@ go_data_slicer_index_complete_index (GODataSlicerIndex *self);
  *
  * Given a tuple, identified by its record_num, return its position relative to
  * other tuples in this SlicerIndex sorted by tuple value.
+ *
+ * @param self - this GODataSlicerIndex
+ * @param tuple_record_num - the record_num value of the tuple which should be searched for
+ * @return the tuple's position relative to other tuples in this SlicerIndex when sorted by tuple values
  */
-guint
+unsigned int
 go_data_slicer_index_get_tuple_index (const GODataSlicerIndex *self, unsigned int tuple_record_num);
 
 /**
@@ -118,6 +126,10 @@ go_data_slicer_index_get_tuple_index (const GODataSlicerIndex *self, unsigned in
  *
  * Given a tuple, identified by its record_num, enable or disable it based on
  * filters (as instructed by the Slicer).
+ *
+ * @param self - this GODataSlicerIndex
+ * @param tuple_record_num - the record_num value of the tuple which should be altered
+ * @param is_enabled - true, if the tuple should be enabled, false otherwise.
  */
 void
 go_data_slicer_index_tuple_set_enabled (GODataSlicerIndex *self, unsigned int tuple_record_num, gboolean is_enabled);
@@ -129,6 +141,8 @@ go_data_slicer_index_tuple_set_enabled (GODataSlicerIndex *self, unsigned int tu
  * by filters.  They will be re-enabled by the Slicer as they are encountered
  * (in the situation where, for example, some filters are changed and the
  * whole Slicer has to recalculate all of its values).
+ * 
+ * @param tuple_record_num - the record_num value of the tuple which should be searched for
  */
 void
 go_data_slicer_index_disable_all_tuples (GODataSlicerIndex *self);
@@ -138,6 +152,12 @@ go_data_slicer_index_disable_all_tuples (GODataSlicerIndex *self);
  *
  * Return all tuples in this SlicerIndex, sorted by tuple values, except for
  * those ones which are disabled by Page Filters.
+ *
+ * IF YOU ARE USING THIS FUNCTION: Be sure to decrease the ref count of each tuple
+ * when you are finished with them.
+ *
+ * @param tuple_record_num - the record_num value of the tuple which should be searched for
+ * @return a GPtrArray of tuples, sorted by value
  */
 GPtrArray *
 go_data_slicer_index_get_all_tuples (const GODataSlicerIndex *self);
