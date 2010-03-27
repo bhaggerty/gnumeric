@@ -22,6 +22,8 @@
 #include "parse-util.h"
 #include "sheet-object-cell-comment.h"
 
+#include "go-data-cache.h"
+
 #include <gsf/gsf-input-stdio.h>
 #include <gsf/gsf-input-textline.h>
 #include <glib/gi18n.h>
@@ -207,6 +209,23 @@ test_func_help (void)
 	mark_test_end (test_name);
 }
 
+/**
+ * Tests here
+ */
+static void
+test_go_data_slicer_tuple_compare_to (void)
+{
+	const char *test_name = "test_go_data_slicer_tuple_compare_to";
+	//~ int res;
+	
+	mark_test_start (test_name);
+	
+	g_printerr("pass haha\n");
+	
+	mark_test_end (test_name);
+	
+}
+
 #define MAYBE_DO(name) if (strcmp (testname, "all") != 0 && strcmp (testname, (name)) != 0) { } else
 
 int
@@ -258,6 +277,7 @@ main (int argc, char const **argv)
 
 	MAYBE_DO ("test_insdel_rowcol_names") test_insdel_rowcol_names ();
 	MAYBE_DO ("test_func_help") test_func_help ();
+	MAYBE_DO ("test_go_data_slicer_tuple_compare_to") test_go_data_slicer_tuple_compare_to();
 
 	/* ---------------------------------------- */
 
