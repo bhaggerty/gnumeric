@@ -25,7 +25,6 @@
 #include <go-data-cache-field.h>
 #include <go-data-slicer.h>
 #include <gnm-sheet-slicer.h>
-#include <go-data-slicer-field.h>
 
 /*
  *
@@ -209,6 +208,7 @@ xlsx_CT_Member (GsfXMLIn *xin, xmlChar const **attrs)
 static void
 xlsx_CT_Field (GsfXMLIn *xin, xmlChar const **attrs)
 {
+/*TODO: Make compatible with current implementation of slicer	
 	XLSXReadState *state = (XLSXReadState *)xin->user_state;
 	int indx = -1;
 
@@ -218,19 +218,20 @@ xlsx_CT_Field (GsfXMLIn *xin, xmlChar const **attrs)
 	if (indx >= 0)
 		go_data_slicer_field_set_field_type_pos (
 			go_data_slicer_get_field ((GODataSlicer *)state->pivot.slicer, indx),
-			xin->node->user_data.v_int, G_MAXINT);
+			xin->node->user_data.v_int, G_MAXINT);*/
 }
 
 static void
 xlsx_CT_DataField (GsfXMLIn *xin, xmlChar const **attrs)
 {
+	/*
 	static EnumVal const aggregations[] = {
 		{ "min",		(1 << GO_AGGREGATE_BY_MIN) },
 		{ "max",		(1 << GO_AGGREGATE_BY_MAX) },
 		{ "sum",		(1 << GO_AGGREGATE_BY_SUM) },
 		{ "product",		(1 << GO_AGGREGATE_BY_PRODUCT) },
 
-		/* TODO : Check this */
+		//TODO : Check this
 		{ "count",		(1 << GO_AGGREGATE_BY_COUNTA) },
 		{ "countNums",		(1 << GO_AGGREGATE_BY_COUNT) },
 
@@ -244,9 +245,9 @@ xlsx_CT_DataField (GsfXMLIn *xin, xmlChar const **attrs)
 
 	XLSXReadState *state = (XLSXReadState *)xin->user_state;
 	int indx = -1;
-	int aggregate_by = (1 << GO_AGGREGATE_BY_SUM);	/* default */
+	int aggregate_by = (1 << GO_AGGREGATE_BY_SUM);	//default
 
-	/* Why "fld" in data vs "x" in col/row ? */
+	//Why "fld" in data vs "x" in col/row ?
 	for (; attrs != NULL && attrs[0] && attrs[1] ; attrs += 2)
 		if (attr_int (xin, attrs, "fld", &indx)) ;
 		else if (attr_enum (xin, attrs, "subtotal", aggregations, &aggregate_by)) ;
@@ -255,12 +256,13 @@ xlsx_CT_DataField (GsfXMLIn *xin, xmlChar const **attrs)
 		GODataSlicerField *dsf = go_data_slicer_get_field ((GODataSlicer *)state->pivot.slicer, indx);
 		go_data_slicer_field_set_field_type_pos (dsf, GDS_FIELD_TYPE_DATA, G_MAXINT);
 		g_object_set (G_OBJECT (dsf), "aggregations", aggregate_by, NULL);
-	}
+	}*/
 }
 
 static void
 xlsx_CT_PivotField (GsfXMLIn *xin, xmlChar const **attrs)
 {
+/*TODO: Make compatible with current implementation of slicer	
 	static EnumVal const ST_Axis_types[] = {
 		{ "axisPage",	GDS_FIELD_TYPE_PAGE },
 		{ "axisRow",	GDS_FIELD_TYPE_ROW },
@@ -369,7 +371,7 @@ xlsx_CT_PivotField (GsfXMLIn *xin, xmlChar const **attrs)
 		      "name",	name,
 		      "aggregations",	    aggregations,
 		      NULL);
-	go_string_unref (name);
+	go_string_unref (name);*/
 }
 
 static void

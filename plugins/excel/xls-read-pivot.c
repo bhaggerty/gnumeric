@@ -36,7 +36,6 @@
 
 #include <go-data-cache.h>
 #include <go-data-cache-field.h>
-#include <go-data-slicer-field.h>
 #include <go-data-slicer.h>
 
 #include <goffice/goffice.h>
@@ -591,6 +590,7 @@ xls_read_SXStreamID (GnmXLImporter *imp, BiffQuery *q, GsfInfile *container)
 void
 xls_read_SXIVD (BiffQuery *q, ExcelReadSheet *esheet)
 {
+	/*TODO: Make compatible with current implementation of slicer
 	GnmXLImporter *imp = esheet->container.importer;
 	GODataSlicerFieldType t = imp->pivot.ivd_index ? GDS_FIELD_TYPE_COL : GDS_FIELD_TYPE_ROW;
 	unsigned int i;
@@ -602,19 +602,20 @@ xls_read_SXIVD (BiffQuery *q, ExcelReadSheet *esheet)
 	d(3, ms_biff_query_dump (q););
 
 	for (i = 0 ; 2*i < q->length ; i++) {
-		guint16 const indx = GSF_LE_GET_GUINT16 (q->data + i*2);
+		guint16 const indx = GSF_LE_GET_GUINT16 (q->data + i*2);*/
 		/* ignore special orientation index. */
-		if (0xfffe != indx) {
+/*		if (0xfffe != indx) {
 			go_data_slicer_field_set_field_type_pos (
 				go_data_slicer_get_field ((GODataSlicer *)imp->pivot.slicer, indx),
 				t, i);
 		}
-	}
+	}*/
 }
 
 static void
 xls_read_SXVI (BiffQuery *q, ExcelReadSheet *esheet, unsigned int i)
 {
+/*TODO: Make compatible with current implementation of slicer	
 	guint16 const type	  = GSF_LE_GET_GUINT16 (q->data + 0);
 	guint16 const flags	  = GSF_LE_GET_GUINT16 (q->data + 2);
 	guint16 const cache_index = GSF_LE_GET_GUINT16 (q->data + 4);
@@ -658,11 +659,13 @@ xls_read_SXVI (BiffQuery *q, ExcelReadSheet *esheet, unsigned int i)
 		go_data_cache_dump_value (go_data_cache_field_get_val (dcf, cache_index));
 		g_print ("\n");
 	}
+*/
 }
 
 void
 xls_read_SXVD (BiffQuery *q, ExcelReadSheet *esheet)
 {
+	/*TODO: Make compatible with current implementation of slicer
 	static GODataSlicerFieldType const axis_bits[] = {
 		GDS_FIELD_TYPE_ROW,	GDS_FIELD_TYPE_COL,
 		GDS_FIELD_TYPE_PAGE,	GDS_FIELD_TYPE_DATA
@@ -679,9 +682,9 @@ xls_read_SXVD (BiffQuery *q, ExcelReadSheet *esheet)
 
 	XL_CHECK_CONDITION (q->length >= 10);
 
-	axis		= GSF_LE_GET_GUINT16 (q->data + 0);
+	axis		= GSF_LE_GET_GUINT16 (q->data + 0);*/
 	/* num_subtotal	= GSF_LE_GET_GUINT16 (q->data + 2); */
-	aggregations	= GSF_LE_GET_GUINT16 (q->data + 4);
+/*	aggregations	= GSF_LE_GET_GUINT16 (q->data + 4);
 	num_items	= GSF_LE_GET_GUINT16 (q->data + 6);
 	len_name	= GSF_LE_GET_GUINT16 (q->data + 8);
 
@@ -708,9 +711,9 @@ xls_read_SXVD (BiffQuery *q, ExcelReadSheet *esheet)
 			xls_read_SXVI (q, esheet, i);
 		}
 	if (ms_biff_query_peek_next (q, &opcode) && BIFF_SXVDEX == opcode &&
-	    check_next_min (q, 12)) {
+	    check_next_min (q, 12)) {*/
 		/* Ignore */
-	}
+/*}*/
 }
 
 void

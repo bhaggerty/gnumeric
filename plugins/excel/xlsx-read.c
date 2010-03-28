@@ -54,7 +54,6 @@
 
 
 #include "goffice-data.h"		/* MOVE TO GOFFCE with slicer code */
-#include "go-data-slicer-field.h"	/* MOVE TO GOFFCE with slicer code */
 
 #include <gsf/gsf-libxml.h>
 #include <gsf/gsf-input.h>
