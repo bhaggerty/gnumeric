@@ -90,7 +90,7 @@ GType go_data_slicer_index_get_type (void);
  *
  * @param self - this GODataSlicerIndex
  * @param record_num - the record number within the cache to process.  Must be less than the total number of records in the cache.
- * @return - the new (or existing) tuple's 
+ * @return - the new (or existing) tuple's unique record_num value (either record_num which was passed, or if the tuple already existed, it's record_num)
  */
 guint 
 go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_num);
@@ -150,7 +150,7 @@ go_data_slicer_index_disable_all_tuples (GODataSlicerIndex *self);
 /**
  * get_all_tuples
  *
- * Return all tuples in this SlicerIndex, sorted by tuple values, except for
+ * Return all IndexedTuples in this SlicerIndex, sorted by tuple values, except for
  * those ones which are disabled by Page Filters.
  *
  * IF YOU ARE USING THIS FUNCTION: Be sure to decrease the ref count of each tuple

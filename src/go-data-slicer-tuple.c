@@ -181,6 +181,14 @@ gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODa
 		/*Retrieve and compare values*/
 		selfVal = go_data_cache_field_get_val(column,self->record_num);
 		otherVal = go_data_cache_field_get_val(column, other->record_num);
+		/*If one of the values is NULL*/
+		if (!selfVal) {
+			return -1;
+		}
+		if (!otherVal) {
+			return 1;
+		}
+		/*Otherwise, perform comparison*/
 		comparison = go_val_cmp(selfVal, otherVal);
 		if (comparison != 0) return comparison;
 	}

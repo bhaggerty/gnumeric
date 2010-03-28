@@ -124,11 +124,10 @@ go_data_slicer_cache_overlay_class_init (GODataSlicerCacheOverlayClass *klass)
 	                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 }
 
-GODataSlicerCacheOverlayRecord   
+const GODataSlicerCacheOverlayRecord *
 go_data_slicer_cache_overlay_get_record (const GODataSlicerCacheOverlay *self, const guint record_num) {
-	GODataSlicerCacheOverlayRecord empty = {0,0,NULL};
-	g_return_val_if_fail(record_num < self->records->len, empty);
-	return g_array_index(self->records, GODataSlicerCacheOverlayRecord, record_num);
+	g_return_val_if_fail(record_num < self->records->len, NULL);
+	return &g_array_index(self->records, GODataSlicerCacheOverlayRecord, record_num);
 }
 
 void

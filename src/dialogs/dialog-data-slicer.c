@@ -33,7 +33,6 @@
 #include <workbook-cmd-format.h>
 #include <gnm-sheet-slicer.h>
 #include <go-data-slicer.h>
-#include <go-data-slicer-field.h>
 #include <go-data-cache.h>
 
 #include <glade/glade.h>
@@ -134,6 +133,7 @@ cb_sort_by_header_index (GtkTreeModel *model,
 static void
 cb_dialog_data_slicer_create_model (DialogDataSlicer *state)
 {
+	/*  Needs to be made compatible with new slicer.
 	struct {
 		GODataSlicerFieldType	type;
 		char const *		type_name;
@@ -143,7 +143,7 @@ cb_dialog_data_slicer_create_model (DialogDataSlicer *state)
 		{ GDS_FIELD_TYPE_ROW,	N_("Row") },
 		{ GDS_FIELD_TYPE_COL,	N_("Column") },
 		{ GDS_FIELD_TYPE_DATA,	N_("Data") },
-		/* Must be last */
+		//Must be last
 		{ GDS_FIELD_TYPE_UNSET,	N_("Unused") }
 	};
 
@@ -152,10 +152,10 @@ cb_dialog_data_slicer_create_model (DialogDataSlicer *state)
 	GtkTreeModel	*smodel;
 
 	model = gtk_tree_store_new (NUM_COLUMNS,
-				    G_TYPE_POINTER,	/* field */
-				    G_TYPE_INT,		/* field-type */
-				    G_TYPE_STRING,	/* field-name */
-				    G_TYPE_INT);		/* field-header-index */
+				    G_TYPE_POINTER,	//field
+				    G_TYPE_INT,		//field-type
+				    G_TYPE_STRING,	//field-name
+				    G_TYPE_INT);	//field-header-index
 	smodel = gtk_tree_model_sort_new_with_model (GTK_TREE_MODEL (model));
 	gtk_tree_sortable_set_sort_func (GTK_TREE_SORTABLE (smodel),
 		FIELD_HEADER_INDEX, cb_sort_by_header_index, NULL, NULL);
@@ -196,6 +196,7 @@ cb_dialog_data_slicer_create_model (DialogDataSlicer *state)
 		}
 	}
 	gtk_tree_view_set_model (state->treeview, smodel);
+	*/
 }
 
 static void

@@ -22,7 +22,6 @@
 #include <gnumeric-config.h>
 #include "gnumeric.h"
 #include "gnm-sheet-slicer-combo.h"
-#include "go-data-slicer-field.h"
 #include "widgets/gnm-cell-combo-view.h"
 #include "widgets/gnm-sheet-slicer-combo-view.h"
 
@@ -98,9 +97,10 @@ gnm_sheet_slicer_combo_class_init (GObjectClass *gobject_class)
 	gobject_class->finalize		= gnm_sheet_slicer_combo_finalize;
 	so_class->new_view		= gnm_sheet_slicer_combo_foo_view_new;
 
+	/*TODO: Needs to be made compatible with new slicer
 	g_object_class_install_property (gobject_class, PROP_FIELD,
 		 g_param_spec_object ("field", NULL, NULL, GO_DATA_SLICER_FIELD_TYPE,
-			GSF_PARAM_STATIC | G_PARAM_READWRITE));
+			GSF_PARAM_STATIC | G_PARAM_READWRITE));*/
 }
 
 typedef GnmCellComboClass GnmSheetSlicerComboClass;

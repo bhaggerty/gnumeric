@@ -33,6 +33,7 @@ typedef GnmValue	GOVal;
 #define	go_val_free		value_release
 #define	go_val_dup		value_dup
 #define	go_val_new_empty	value_new_empty
+#define go_val_new_int		value_new_int
 #define	go_val_new_float	value_new_float
 #define	go_val_new_bool		value_new_bool
 #define	go_val_new_str		value_new_string

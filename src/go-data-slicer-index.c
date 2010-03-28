@@ -212,6 +212,8 @@ go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_
      /*Search for tuple in the tree*/
      existing_tuple = g_tree_lookup(self->tuples_tree, new_tuple);
      if (existing_tuple) {
+          /*won't be needing the new_tuple*/
+          g_object_unref (new_tuple);
           /*if it's found, return its record_num*/
           return existing_tuple->tuple->record_num;
      } else {
@@ -294,7 +296,7 @@ go_data_slicer_index_get_all_tuples (const GODataSlicerIndex *self) {
     for(i=0;i<accumulator->len;i++) {
         indexed_tuple = (GODataSlicerIndexedTuple *) g_ptr_array_index(accumulator,i);
         if (indexed_tuple->enabled) {
-             g_ptr_array_add(result, indexed_tuple->tuple);
+             g_ptr_array_add(result, indexed_tuple);
              /*Increase reference count to that tuple since someone else will be using it*/
              g_object_ref(indexed_tuple->tuple);
         }

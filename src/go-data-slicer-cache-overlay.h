@@ -67,7 +67,7 @@ struct _GODataSlicerCacheOverlay
 	GODataCache * cache; /*The cache to be overlayed by this CacheOverlay*/
 	GArray * records; /*An array of GODataSlicerCacheOverlayRecords - one for each record in the Cache*/
 
-	GODataSlicerCacheOverlayRecord  (*get_record) (const GODataSlicerCacheOverlay *self, const guint record_num);
+	const GODataSlicerCacheOverlayRecord *  (*get_record) (const GODataSlicerCacheOverlay *self, const guint record_num);
 	void (*append_record) (GODataSlicerCacheOverlay *self, GODataSlicerCacheOverlayRecord * record);
 };
 
@@ -83,7 +83,7 @@ GType go_data_slicer_cache_overlay_get_type (void) G_GNUC_CONST;
  * @param record_num - the record_num of the record desired
  * @return the record
  */
-GODataSlicerCacheOverlayRecord  
+const GODataSlicerCacheOverlayRecord *  
 go_data_slicer_cache_overlay_get_record (const GODataSlicerCacheOverlay *self, const guint record_num);
 
 /**

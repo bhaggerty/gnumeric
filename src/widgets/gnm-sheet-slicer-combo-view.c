@@ -31,7 +31,6 @@
 #include "value.h"
 
 #include "gui-gnumeric.h"
-#include "go-data-slicer-field.h"
 #include "go-data-cache-field.h"
 #include <goffice/goffice.h>
 #include <gsf/gsf-impl-utils.h>
@@ -89,6 +88,7 @@ static GtkWidget *
 sscombo_create_list (SheetObject *so,
 		     GtkTreePath **clip, GtkTreePath **select, gboolean *make_buttons)
 {
+/* TODO: needs to be made compatible with new slicer
 	GnmSheetSlicerCombo *sscombo = GNM_SHEET_SLICER_COMBO (so);
 	GODataCacheField const *dcf  = go_data_slicer_field_get_cache_field (sscombo->dsf);
 	GtkListStore	*model;
@@ -137,6 +137,8 @@ sscombo_create_list (SheetObject *so,
 	*make_buttons = TRUE;
 
 	return list;
+*/
+	return NULL;
 }
 
 static GtkWidget *

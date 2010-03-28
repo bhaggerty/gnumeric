@@ -63,7 +63,6 @@
 #include "widgets/widget-editable-label.h"
 #include "gnm-sheet-slicer.h"
 
-#include <go-data-slicer-field.h>
 #include <goffice/goffice.h>
 
 #include <gdk/gdkkeysyms.h>
@@ -1973,7 +1972,7 @@ scg_context_menu (SheetControlGUI *scg, GdkEventButton *event,
 	}
 
 	slicer = sv_editpos_in_slicer (scg_view (scg));
-	/* FIXME: disabled for now */
+	/* FIXME: disabled for now
 	if (0 && slicer) {
 		GODataSlicerField *dsf = gnm_sheet_slicer_field_header_at_pos (slicer, &sv->edit_pos);
 		if (NULL != dsf) {
@@ -1984,7 +1983,7 @@ scg_context_menu (SheetControlGUI *scg, GdkEventButton *event,
 		}
 		display_filter |= CONTEXT_DISPLAY_WITH_DATA_SLICER;
 		display_filter &= ~CONTEXT_DISPLAY_FOR_CELLS;
-	}
+	}*/
 
 	if (display_filter & CONTEXT_DISPLAY_FOR_CELLS)
 		display_filter |= ((has_link) ?

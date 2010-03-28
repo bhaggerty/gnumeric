@@ -22,7 +22,6 @@
 #include <gnumeric-config.h>
 #include "gnm-sheet-slicer.h"
 #include "go-data-slicer-impl.h"
-#include "go-data-slicer-field-impl.h"
 #include "go-data-cache.h"
 #include "sheet.h"
 #include "ranges.h"
@@ -263,21 +262,22 @@ GODataSlicerField *
 gnm_sheet_slicer_field_header_at_pos (GnmSheetSlicer const *gss,
 				      GnmCellPos const *pos)
 {
+/*TODO: Needs to be made compatible with new slicer
 	int res = -1;
 	unsigned int c, r;
 
 	g_return_val_if_fail (IS_GNM_SHEET_SLICER (gss), NULL);
 
-	/* 0) TODO page fields */
+	// 0) TODO page fields
 	if (pos->col < gss->range.start.col || pos->row < gss->range.start.row)
 		return NULL;
 
 	c = pos->col - gss->range.start.col;
 	r = pos->row - gss->range.start.row;
 
-	/* TODO other layouts */
+	//TODO other layouts
 
-	/* col headers along the top starting at first_data_col */
+	//col headers along the top starting at first_data_col
 	if (r == 0 &&
 	    c >= gss->first_data_col) {
 		c -= gss->first_data_col;
@@ -285,14 +285,16 @@ gnm_sheet_slicer_field_header_at_pos (GnmSheetSlicer const *gss,
 			res = g_array_index (gss->base.fields[GDS_FIELD_TYPE_COL], int, c);
 
 
-	/* row headers just about data starting at 0th col */
-	} else if (r >= (gss->first_data_row - 1) &&	/* -1 for the headers */
+	// row headers just about data starting at 0th col 
+	} else if (r >= (gss->first_data_row - 1) &&	//-1 for the headers
 		   c < gss->first_data_col) {
 		if (c < gss->base.fields[GDS_FIELD_TYPE_ROW]->len)
 			res = g_array_index (gss->base.fields[GDS_FIELD_TYPE_ROW], int, c);
 	}
 
 	return (res >= 0) ? go_data_slicer_get_field (&gss->base, res) : NULL;
+	*/
+	return NULL;
 }
 
 /************************************************************/

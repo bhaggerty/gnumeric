@@ -71,9 +71,6 @@ libspreadsheet_la_SOURCES =			\
 	go-data-slicer-impl.h 		\
 	go-data-slicer.h 		\
 	go-data-slicer.c 		\
-	go-data-slicer-field-impl.h 	\
-	go-data-slicer-field.h 		\
-	go-data-slicer-field.c 		\
 	go-data-slicer-index.h      \
 	go-data-slicer-index.c      \
 	go-data-slicer-tuple.h      \
@@ -240,8 +237,6 @@ libspreadsheet_include_HEADERS = 	\
 	go-data-cache-source.h 			\
 	go-data-cache.h 			\
 	go-data-cache-field.h 			\
-	go-data-slicer.h			\
-	go-data-slicer-field.h			\
 	go-val.h				\
 	graph.h					\
 	gutils.h				\
