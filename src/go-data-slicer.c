@@ -388,6 +388,11 @@ go_data_slicer_slice_cache (GODataSlicer *self) {
     }
 
     /*SLICE*/
+
+    /*disable all tuples in the column and row fields*/
+    self->col_field->disable_all_tuples(self->col_field);
+    self->row_field->disable_all_tuples(self->row_field);
+     
     /*make a single pass through the cache to compute aggregate values and totals*/
     for (i=0;i<go_data_cache_num_items(self->cache);i++) {
          /*Get overlay record for cache row*/
@@ -407,7 +412,10 @@ go_data_slicer_slice_cache (GODataSlicer *self) {
               }
          }
 
-         if (!ignoreRecord) {              
+         if (!ignoreRecord) {
+              /*enable row and column field tuples*/
+              self->col_field->tuple_set_enabled(self->col_field, record->col_tuple, TRUE);
+              self->row_field->tuple_set_enabled(self->row_field, record->row_tuple, TRUE);              
               /*Compute coordinates*/
               x = self->col_field->get_tuple_index(self->col_field,record->col_tuple);              
               y = self->row_field->get_tuple_index(self->row_field,record->row_tuple);
