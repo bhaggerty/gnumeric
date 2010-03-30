@@ -3,6 +3,9 @@
  *
  * Copyright (C) 2009 Morten Welinder (terra@gnome.org)
  */
+ 
+ //---------------------------------------------------
+ 
 #include <gnumeric-config.h>
 #include "gnumeric.h"
 #include "libgnumeric.h"
@@ -22,7 +25,13 @@
 #include "parse-util.h"
 #include "sheet-object-cell-comment.h"
 
+#include "ranges.h"
+#include "gnm-data-cache-source.h"
+#include "go-val.h"
+#include "go-data-cache-field.h"
 #include "go-data-cache.h"
+#include "go-data-cache-field-impl.h"
+#include "go-data-cache-impl.h"
 
 #include <gsf/gsf-input-stdio.h>
 #include <gsf/gsf-input-textline.h>
@@ -212,16 +221,62 @@ test_func_help (void)
 /**
  * Tests here
  */
+
 static void
-test_go_data_slicer_tuple_compare_to (void)
+test_go_data_cache_build_cache(void)
 {
-	const char *test_name = "test_go_data_slicer_tuple_compare_to";
-	//~ int res;
+	Workbook *wb;
+	Sheet *sheet;
+	GODataCache *cache;
+	GnmRange *range;
+	int row, col;
+	
+	const char *test_name = "test_go_data_cache_build_cache";
+	int numRows = 10, numCols = 3;
 	
 	mark_test_start (test_name);
 	
-	g_printerr("pass haha\n");
+	wb = workbook_new();
+	sheet = workbook_sheet_add (wb, -1, 1024, 1024);
 	
+	for (row = 0; row < numRows; row++) {
+		for (col = 0; col < numCols; col++) {
+			GnmCell *tempCell = sheet_cell_create(sheet, col, row);
+			GnmValue *tempVal = value_new_int(col * (row % 257)); //col * 10 + row
+				sheet_cell_set_value(tempCell, tempVal);
+		}
+	}
+	
+	for (row = 0; row < numRows; row++) {
+		for (col = 0; col < numCols; col++) {
+			GnmCell * tempCell = sheet_cell_get(sheet, col, row);
+			GnmValue * tempVal = tempCell->value;
+			value_dump(tempVal);
+		}
+	}
+	
+	cache = g_object_new(GO_DATA_CACHE_TYPE, NULL);
+	range = g_new(GnmRange, 1);
+	range = range_init(range, 0, 0, numCols - 1, numRows - 1);
+	
+	go_data_cache_build_cache(cache, sheet, range);
+	go_data_cache_dump(cache, NULL, NULL);
+	
+	g_object_unref (wb);
+	
+	mark_test_end (test_name);
+}
+
+static void
+test_go_data_slicer_tuple_compare_to (void)
+{
+	
+	const char *test_name = "test_go_data_slicer_tuple_compare_to";
+
+	mark_test_start (test_name);
+	
+	g_printerr("pass haha\n");
+
 	mark_test_end (test_name);
 	
 }
@@ -277,7 +332,8 @@ main (int argc, char const **argv)
 
 	MAYBE_DO ("test_insdel_rowcol_names") test_insdel_rowcol_names ();
 	MAYBE_DO ("test_func_help") test_func_help ();
-	MAYBE_DO ("test_go_data_slicer_tuple_compare_to") test_go_data_slicer_tuple_compare_to();
+	MAYBE_DO ("test_go_data_cache_build_cache") test_go_data_cache_build_cache();
+	MAYBE_DO ("test_go_data_slicer_tuple_compare_to") test_go_data_slicer_tuple_compare_to ();
 
 	/* ---------------------------------------- */
 

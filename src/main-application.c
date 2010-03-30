@@ -114,6 +114,12 @@ static const GOptionEntry gnumeric_options [] = {
 		N_("Exit immediately after loading the selected books"),
 		NULL
 	},
+	//~ {
+		//~ "quit", 0,
+		//~ G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &immediate_exit_flag,
+		//~ N_("Exit immediately after loading the selected books"),
+		//~ NULL
+	//~ },
 	{ G_OPTION_REMAINING, 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &startup_files, NULL, NULL },
 	{ NULL }
 };

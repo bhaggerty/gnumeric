@@ -170,7 +170,7 @@ sub sstest {
 	    last if $actual[$i] ne $expected[$i];
 	    $i++;
 	}
-	if ($i < @actual || $i < @expected) {
+	if ($i < @actual && $i < @expected) {
 	    $ok = 0;
 	    print STDERR "Differences between actual and expected on line ", ($i + 1), ":\n";
 	    print STDERR "Actual  : ", ($i < @actual ? $actual[$i] : "-"), "\n";

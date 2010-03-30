@@ -8,6 +8,8 @@
 #
 # 2xxx: Internal sstest
 #
+# 4xxx: Slicer
+#
 # 5xxx: Importers
 # 59xx:   Minor formats
 #
