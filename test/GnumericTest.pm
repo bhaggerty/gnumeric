@@ -7,7 +7,7 @@ use XML::Parser;
 
 @GnumericTest::ISA = qw (Exporter);
 @GnumericTest::EXPORT = qw(test_sheet_calc test_importer test_valgrind
-			   test_ssindex sstest test_command message
+			   test_ssindex sstest sstestslicer test_command message
 			   $ssconvert $sstest $topsrc $top_builddir
 			   $samples $PERL);
 @GnumericTest::EXPORT_OK = qw(junkfile);
@@ -168,6 +168,58 @@ sub sstest {
 	my $i = 0;
 	while ($i < @actual && $i < @expected) {
 	    last if $actual[$i] ne $expected[$i];
+	    $i++;
+	}
+	if ($i < @actual || $i < @expected) {
+	    $ok = 0;
+	    print STDERR "Differences between actual and expected on line ", ($i + 1), ":\n";
+	    print STDERR "Actual  : ", ($i < @actual ? $actual[$i] : "-"), "\n";
+	    print STDERR "Expected: ", ($i < @expected ? $expected[$i] : "-"), "\n";
+	} else {
+	    $ok = 1;
+	}
+    }
+
+    if ($ok) {
+	print STDERR "Pass\n";
+    } else {
+	die "Fail.\n\n";
+    }
+}
+
+# -----------------------------------------------------------------------------
+
+sub sstestslicer {
+    my $test = shift @_;
+    my $expected = shift @_;
+
+    my $cmd = "$sstest $test";
+    my $actual = `$cmd 2>&1`;
+    my $err = $?;
+    die "Failed command: $cmd\n" if $err;
+
+    my $ok;
+    if (ref $expected) {
+	local $_ = $actual;
+	$ok = &$expected ($_);
+    } else {
+	my @actual = split ("\n", $actual);
+	chomp @actual;
+	while (@actual > 0 && $actual[-1] eq '') {
+	    my $dummy = pop @actual;
+	}
+
+	my @expected = split ("\n", $expected);
+	chomp @expected;
+	while (@expected > 0 && $expected[-1] eq '') {
+	    my $dummy = pop @expected;
+	}
+
+	my $i = 0;
+	#print "actual length: ", @actual, " expected length: ", @expected, "\n";
+	while ($i < @actual && $i < @expected) {
+	    last if $actual[$i] ne $expected[$i];
+	   # print STDERR "Actual: ", $actual[$i], " Expected: ", $expected[$i], "\n";
 	    $i++;
 	}
 	if ($i < @actual && $i < @expected) {

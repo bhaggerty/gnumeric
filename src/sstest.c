@@ -2,6 +2,9 @@
  * sstest.c: Test code for Gnumeric
  *
  * Copyright (C) 2009 Morten Welinder (terra@gnome.org)
+ *                                Simon Guo (simongjh@gmail.com)
+ *                                Raza Atif (atif56@gmail.com)
+ *                                Claudio Yin (claudio.yin.utoronto.ca)
  */
  
  //---------------------------------------------------
@@ -31,20 +34,27 @@
 #include "go-data-cache-field.h"
 #include "go-data-cache.h"
 #include "go-data-cache-field-impl.h"
-#include "go-data-cache-impl.h"
 
+#include "go-data-cache-impl.h"
 #include <gsf/gsf-input-stdio.h>
 #include <gsf/gsf-input-textline.h>
 #include <glib/gi18n.h>
 #include <string.h>
 
 static gboolean sstest_show_version = FALSE;
+static char *sstest_slicer_file = NULL;
 
 static GOptionEntry const sstest_options [] = {
 	{
 		"version", 'V',
 		0, G_OPTION_ARG_NONE, &sstest_show_version,
 		N_("Display program version"),
+		NULL
+	},
+	{
+		"export-slicer-data", 0,
+		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &sstest_slicer_file,
+		N_("The data file to export"),
 		NULL
 	},
 
@@ -223,7 +233,7 @@ test_func_help (void)
  */
 
 static void
-test_go_data_cache_build_cache(void)
+test_go_data_cache_build_cache(GOCmdContext *cc)
 {
 	Workbook *wb;
 	Sheet *sheet;
@@ -232,7 +242,7 @@ test_go_data_cache_build_cache(void)
 	int row, col;
 	
 	const char *test_name = "test_go_data_cache_build_cache";
-	int numRows = 10, numCols = 3;
+	int numRows = 60, numCols = 5;
 	
 	mark_test_start (test_name);
 	
@@ -241,17 +251,68 @@ test_go_data_cache_build_cache(void)
 	
 	for (row = 0; row < numRows; row++) {
 		for (col = 0; col < numCols; col++) {
-			GnmCell *tempCell = sheet_cell_create(sheet, col, row);
-			GnmValue *tempVal = value_new_int(col * (row % 257)); //col * 10 + row
-				sheet_cell_set_value(tempCell, tempVal);
-		}
-	}
-	
-	for (row = 0; row < numRows; row++) {
-		for (col = 0; col < numCols; col++) {
-			GnmCell * tempCell = sheet_cell_get(sheet, col, row);
-			GnmValue * tempVal = tempCell->value;
-			value_dump(tempVal);
+			GnmCell * tempCell = sheet_cell_create(sheet, col, row);
+			GnmValue * tempVal;
+			if (col == 0) {
+				if (row%4 == 0) {
+					tempVal = value_new_string_nocopy((char *)"A");
+				} else if (row%4 == 1) {
+					tempVal = value_new_string_nocopy((char *)"B");
+				} else if (row%4 == 2) {
+					tempVal = value_new_string_nocopy((char *)"C");
+				} else {
+					tempVal = value_new_string_nocopy((char *)"D");
+				}
+			} else if (col == 1) {
+				tempVal = value_new_int(row);
+			} else if (col == 2) {
+				if (row%5 == 0) {
+					tempVal = value_new_float(14.4);
+				} else if (row%5 == 1) {
+					tempVal = value_new_float(18.8);
+				} else if (row%5 == 2) {
+					tempVal = value_new_float(7.6);
+				} else if (row%5 == 3) {
+					tempVal = value_new_float(3.3);
+				} else {
+					tempVal = value_new_float(11.6);
+				}
+			} else if (col == 3) {
+				tempVal = value_new_int(row % 10);
+			} else if (col == 4) {
+				if (row == 0) {
+					GnmEvalPos *pos = g_new(GnmEvalPos, 1);
+					pos = eval_pos_init(pos, sheet, col, row);
+					tempVal = value_new_error_DIV0(pos);
+				} else if (row == 1) {
+					GnmEvalPos *pos = g_new(GnmEvalPos, 1);
+					pos = eval_pos_init(pos, sheet, col, row);
+					tempVal = value_new_error_NA(pos);
+				} else if (row == 2) {
+					GnmEvalPos *pos = g_new(GnmEvalPos, 1);
+					pos = eval_pos_init(pos, sheet, col, row);
+					tempVal = value_new_error_REF(pos);
+				} else if (row == 3) {
+					tempVal = value_new_bool(TRUE);
+				} else if (row == 4) {
+					tempVal = value_new_bool(FALSE);
+				} else if (row == 5) {
+					tempVal = value_new_empty();
+				} else {
+					if (row%5 == 1) {
+						tempVal = value_new_string_nocopy((char *)"a");
+					} else if (row%5 == 2) {
+						tempVal = value_new_string_nocopy((char *)"b");
+					} else if (row%5 == 3) {
+						tempVal = value_new_string_nocopy((char *)"c");
+					} else if (row%5 == 4) {
+						tempVal = value_new_string_nocopy((char *)"d");
+					} else {
+						tempVal = value_new_string_nocopy((char *)"e");
+					}
+				}
+			}
+			sheet_cell_set_value(tempCell, tempVal);
 		}
 	}
 	
@@ -263,8 +324,69 @@ test_go_data_cache_build_cache(void)
 	go_data_cache_dump(cache, NULL, NULL);
 	
 	g_object_unref (wb);
-	
+
 	mark_test_end (test_name);
+	
+	//~ if (sstest_slicer_file) {
+		//~ GOFileOpener *fo = NULL;
+		//~ char *infile = sstest_slicer_file; //go_shell_arg_to_uri (sstest_slicer_file);
+		//~ int res = 0, row = 0, col = 0, numRows = 10, numCols = 2;
+		
+		//~ GOIOContext *io_context = go_io_context_new (cc);
+		//~ WorkbookView *wbv;
+		
+		//~ const char *test_name = "test_go_data_cache_build_cache";
+	
+		//~ mark_test_start (test_name);
+		
+		//~ wbv = wb_view_new_from_uri (infile, fo,
+					    //~ io_context,
+					    //~ NULL);
+
+		//~ if (wbv == NULL || go_io_error_occurred (io_context)) {
+			//~ go_io_error_display (io_context);
+			//~ res = 1;
+		//~ } else {
+			//Workbook *wb = wb_view_get_workbook (wbv);
+			//~ Sheet *sheet = wb_view_cur_sheet (wbv);
+			
+			//~ for (row = 0; row < numRows; row++) {
+				//~ for (col = 0; col < numCols; col++) {
+					//~ GnmCell * tempCell = sheet_cell_get(sheet, col, row);
+					//~ GnmValue * tempVal = tempCell->value;
+					//~ value_dump(tempVal);
+				//~ }
+			//~ }
+
+			//~ res = handle_export_options (fs, GO_DOC (wb));
+			//~ if (res) {
+				//~ g_object_unref (wb);
+				//~ goto out;
+			//~ }
+			
+			//~ GSList *ptr;
+			//~ GString *s;
+			//~ char *tmpfile;
+			//~ int idx = 0;
+			//~ res = 0;
+			
+			//~ for (ptr = workbook_sheets(wb); ptr && !res; ptr = ptr->next, idx++) {
+				//~ wb_view_sheet_focus(wbv, (Sheet *)ptr->data);
+				//~ s = g_string_new (outfile);
+				//~ g_string_append_printf(s, ".%d", idx);
+				//~ tmpfile = g_string_free (s, FALSE);
+				//~ res = !wb_view_save_as (wbv, fs, tmpfile, cc);
+				//~ g_free(tmpfile);
+			//~ }
+			//~ g_object_unref (wb);
+		//~ }
+		//~ g_object_unref (io_context);
+		
+		//~ g_object_unref (wb);
+	
+		//~ mark_test_end (test_name);
+	//~ }
+	
 }
 
 static void
@@ -332,7 +454,7 @@ main (int argc, char const **argv)
 
 	MAYBE_DO ("test_insdel_rowcol_names") test_insdel_rowcol_names ();
 	MAYBE_DO ("test_func_help") test_func_help ();
-	MAYBE_DO ("test_go_data_cache_build_cache") test_go_data_cache_build_cache();
+	MAYBE_DO ("test_go_data_cache_build_cache") test_go_data_cache_build_cache(cc);
 	MAYBE_DO ("test_go_data_slicer_tuple_compare_to") test_go_data_slicer_tuple_compare_to ();
 
 	/* ---------------------------------------- */

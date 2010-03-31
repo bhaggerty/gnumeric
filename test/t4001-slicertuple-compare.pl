@@ -1,3 +1,4 @@
+
 #!/usr/bin/perl -w
 # -----------------------------------------------------------------------------
 
@@ -9,7 +10,7 @@ my $expected;
 { local $/; $expected = <DATA>; }
 
 &message ("Checking function go_data_slicer_tuple_compare_to.");
-&sstest ("test_go_data_slicer_tuple_compare_to", $expected);
+&sstestslicer ("test_go_data_slicer_tuple_compare_to", $expected);
 
 __DATA__
 -----------------------------------------------------------------------------
