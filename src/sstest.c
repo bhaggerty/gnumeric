@@ -232,19 +232,14 @@ test_func_help (void)
  * Tests here
  */
 
-static void
-test_go_data_cache_build_cache(void)
+static GODataCache *
+build_cache(void) 
 {
 	Workbook *wb;
 	Sheet *sheet;
 	GODataCache *cache;
 	GnmRange *range;
-	int row, col;
-	
-	const char *test_name = "test_go_data_cache_build_cache";
-	int numRows = 60, numCols = 5;
-	
-	mark_test_start (test_name);
+	int row, col, numRows = 60, numCols = 5;
 	
 	wb = workbook_new();
 	sheet = workbook_sheet_add (wb, -1, 1024, 1024);
@@ -321,9 +316,23 @@ test_go_data_cache_build_cache(void)
 	range = range_init(range, 0, 0, numCols - 1, numRows - 1);
 	
 	go_data_cache_build_cache(cache, sheet, range);
-	go_data_cache_dump(cache, NULL, NULL);
 	
 	g_object_unref (wb);
+	
+	return cache;
+}
+
+static void
+test_go_data_cache_build_cache(void)
+{
+	
+	GODataCache *cache;
+	const char *test_name = "test_go_data_cache_build_cache";
+	
+	mark_test_start (test_name);
+	
+	cache = build_cache();
+	go_data_cache_dump(cache, NULL, NULL);
 
 	mark_test_end (test_name);
 	
