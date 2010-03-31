@@ -17,14 +17,16 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*******************************************************************************
- * GODataSlicerCacheOverlay                                                    *
- *																		       *
- * This class complements the Cache by providing each record with additional   *
- * information - in particular, the unique numerical identifiers of the        *
- * various tuples which are found in that record.  It doesn't do anything      *
- * else.  Records are zero-indexed as in the Cache.                            *
- *******************************************************************************/
+/**
+ * SECTION: GODataSlicerCacheOverlay
+ * @short_description: An overlay of the Cache
+ * @see_also: #GoDataCache
+ *
+ * This class complements the Cache by providing each record with additional   
+ * information - in particular, the unique numerical identifiers of the        
+ * various tuples which are found in that record.  It doesn't do anything      
+ * else.  Records are zero-indexed as in the Cache.  
+ */
 
 #ifndef _GODATASLICERCACHEOVERLAY_H_
 #define _GODATASLICERCACHEOVERLAY_H_
@@ -75,24 +77,25 @@ GType go_data_slicer_cache_overlay_get_type (void) G_GNUC_CONST;
 
 
 /**
- * get_record
+ * get_record:
+ *
+ * @self:			This CacheOverlay
+ * @record_num:		the record_num of the record desired
  *
  * Returns a particular record in this CacheOverlay
- *
- * @param self - this CacheOverlay
- * @param record_num - the record_num of the record desired
- * @return the record
+
+ * Returns: the record
  */
 const GODataSlicerCacheOverlayRecord *  
 go_data_slicer_cache_overlay_get_record (const GODataSlicerCacheOverlay *self, const guint record_num);
 
 /**
- * append_record
+ * append_record:
+ *
+ * @self:			This CacheOverlay
+ * @record:			the record to insert
  *
  * Inserts a new record into this CacheOverlay
- *
- * @param self - this CacheOverlay
- * @param record - the record to insert
  */
 void
 go_data_slicer_cache_overlay_append_record (GODataSlicerCacheOverlay *self, GODataSlicerCacheOverlayRecord * record);

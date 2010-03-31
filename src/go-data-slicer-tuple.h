@@ -18,15 +18,17 @@
  * with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*******************************************************************************
- * GODataSlicerTuple                                                           *
- *                                                                             *
- * Represents a tuple of values from a record in the cache.  In particular, it *
- * belongs to a SlicerIndex which dictates which Cache Fields from a record    *
- * are tupelized, and contains a record number to indicate the record in which *
- * those values are contained.  Can be compared to another tuple from the same *
- * SlicerIndex.                                                                *
- *******************************************************************************/
+/**
+ * SECTION: GODataSlicerTuple
+ * @short_description: A tuple of values from a record in the cache.
+ * @see_also: #GoDataCache
+ *
+ * Represents a tuple of values from a record in the cache.  In particular, it 
+ * belongs to a SlicerIndex which dictates which Cache Fields from a record    
+ * are tupelized, and contains a record number to indicate the record in which
+ * those values are contained.  Can be compared to another tuple from the same 
+ * SlicerIndex.
+ */
 
 #ifndef _GO_DATA_SLICER_TUPLE_H
 #define _GO_DATA_SLICER_TUPLE_H
@@ -64,13 +66,14 @@ struct _GODataSlicerTuple
 GType go_data_slicer_tuple_get_type (void) G_GNUC_CONST;
 
 /**
- * comapare_to
- *
- * Compares this tuple to another tuple with the same tuple template.
+ * comapare_to:
  *
  * @param self - this tuple
  * @param other - the tuple to compare this tuple to
- * @return 1 if this tuple should appear before other, -1 if this tuple should appear after other, and 0 otherwise (equality).
+ *
+ * Compares this tuple to another tuple with the same tuple template.
+ *
+ * Returns: 1 if this tuple should appear before other, -1 if this tuple should appear after other, and 0 otherwise (equality).
  */
 gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other);
 

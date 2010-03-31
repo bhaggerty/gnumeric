@@ -19,16 +19,17 @@
  * USA
  */
 
-
-/*******************************************************************************
- * GODataSlicerIndex                                                           *
- *                                                                             *
- * Organizes a set of tuples which represent a row field, a cache field, or a  *
- * page field.  Maintains various representations of these tuples, including   *
- * a representation sorted by tuple value as well as one sorted by each        *
- * tuple's unique numerical index.  These representations allow the slicer in  *
- * such tasks as sorting tuples, and identifying/eliminating duplicates.       *
- ******************************************************************************/
+/**
+ * SECTION: GODataSlicerIndex
+ * @short_description: An index used by the slicer
+ * @see_also: #GoDataCache
+ *
+ * Organizes a set of tuples which represent a row field, a cache field, or a  
+ * page field.  Maintains various representations of these tuples, including   
+ * a representation sorted by tuple value as well as one sorted by each        
+ * tuple's unique numerical index.  These representations allow the slicer in  
+ * such tasks as sorting tuples, and identifying/eliminating duplicates. 
+ */
 
 #ifndef GO_DATA_SLICER_INDEX_H
 #define GO_DATA_SLICER_INDEX_H
@@ -81,28 +82,31 @@ GType go_data_slicer_index_get_type (void);
 
 
 /**
- * index_record
+ * index_record:
+ *
+ * @self:           this GODataSlicerIndex
+ * @record_num:     the record number within the cache to process.  Must be less than the total number of records in the cache.\
  *
  * Given a record number from the cache this SlicerIndex is associated with,
  * process the record to form a key tuple (by choosing fields according to this
  * this SlicerIndex's tuple template), and then perform an insertion for that
  * record.
  *
- * @param self - this GODataSlicerIndex
- * @param record_num - the record number within the cache to process.  Must be less than the total number of records in the cache.
- * @return - the new (or existing) tuple's unique record_num value (either record_num which was passed, or if the tuple already existed, it's record_num)
+ * Returns: the new (or existing) tuple's unique record_num value 
+ *          (either record_num which was passed, or if the tuple already existed, it's record_num)
  */
 guint 
 go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_num);
 
 /**
- * complete_index
+ * complete_index:
+ *
+ * @self:            this GODataSlicerIndex
  *
  * Used to make this index (essentially) immutable when all cache rows have 
  * been processed.  At this point, the various indexes of tuples will be 
  * finished up (mostly numbering stuff).
  * 
- * @param self - this GODataSlicerIndex
  */
 void
 go_data_slicer_index_complete_index (GODataSlicerIndex *self);
@@ -111,44 +115,47 @@ go_data_slicer_index_complete_index (GODataSlicerIndex *self);
 /**
  * get_tuple_index
  *
+ * @self - this GODataSlicerIndex
+ * @tuple_record_num - the record_num value of the tuple which should be searched for
+ *
  * Given a tuple, identified by its record_num, return its position relative to
  * other tuples in this SlicerIndex sorted by tuple value.
  *
- * @param self - this GODataSlicerIndex
- * @param tuple_record_num - the record_num value of the tuple which should be searched for
- * @return the tuple's position relative to other tuples in this SlicerIndex when sorted by tuple values
+ * Returns: the tuple's position relative to other tuples in this SlicerIndex when sorted by tuple values
  */
 unsigned int
 go_data_slicer_index_get_tuple_index (const GODataSlicerIndex *self, unsigned int tuple_record_num);
 
 /**
- * tuple_set_enabled
+ * tuple_set_enabled:
+ * 
+ * @self:               this GODataSlicerIndex
+ * @tuple_record_num:   the record_num value of the tuple which should be altered
+ * @is_enabled:         true, if the tuple should be enabled, false otherwise.
  *
  * Given a tuple, identified by its record_num, enable or disable it based on
  * filters (as instructed by the Slicer).
- *
- * @param self - this GODataSlicerIndex
- * @param tuple_record_num - the record_num value of the tuple which should be altered
- * @param is_enabled - true, if the tuple should be enabled, false otherwise.
  */
 void
 go_data_slicer_index_tuple_set_enabled (GODataSlicerIndex *self, unsigned int tuple_record_num, gboolean is_enabled);
 
 /**
  * disable_all_tuples
+ * 
+ * @tuple_record_num:        the record_num value of the tuple which should be searched for
  *
  * Disable all tuples in this SlicerIndex, as though they had been disabled 
  * by filters.  They will be re-enabled by the Slicer as they are encountered
  * (in the situation where, for example, some filters are changed and the
  * whole Slicer has to recalculate all of its values).
- * 
- * @param tuple_record_num - the record_num value of the tuple which should be searched for
  */
 void
 go_data_slicer_index_disable_all_tuples (GODataSlicerIndex *self);
 
 /**
- * get_all_tuples
+ * get_all_tuples:
+ *
+ * @tuple_record_num:   the record_num value of the tuple which should be searched for
  *
  * Return all IndexedTuples in this SlicerIndex, sorted by tuple values, except for
  * those ones which are disabled by Page Filters.
@@ -156,8 +163,7 @@ go_data_slicer_index_disable_all_tuples (GODataSlicerIndex *self);
  * IF YOU ARE USING THIS FUNCTION: Be sure to decrease the ref count of each tuple
  * when you are finished with them.
  *
- * @param tuple_record_num - the record_num value of the tuple which should be searched for
- * @return a GPtrArray of tuples, sorted by value
+ * Returns: a GPtrArray of tuples, sorted by value
  */
 GPtrArray *
 go_data_slicer_index_get_all_tuples (const GODataSlicerIndex *self);
