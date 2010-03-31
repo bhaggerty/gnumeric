@@ -47,6 +47,10 @@ void		 gnm_data_cache_source_set_range (GnmDataCacheSource *src, GnmRange const 
 char const	*gnm_data_cache_source_get_name  (GnmDataCacheSource const *src);
 void		 gnm_data_cache_source_set_name  (GnmDataCacheSource *src, char const *name);
 
+void go_data_cache_build_cache(GODataCache * cache, Sheet *sheet, GnmRange * cellRange);
+void go_data_cache_create_all_fields(GODataCache * cache, Sheet * sheet, GPtrArray *hashedIdx, GnmRange * cellRange);
+void go_data_cache_dump_hash_table(GHashTable* ht);
+
 G_END_DECLS
 
 #endif /* GNM_DATA_CACHE_SOURCE_H */
