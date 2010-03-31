@@ -42,7 +42,7 @@
 #include <string.h>
 
 static gboolean sstest_show_version = FALSE;
-static char *sstest_slicer_file = NULL;
+//~ static char *sstest_slicer_file = NULL;
 
 static GOptionEntry const sstest_options [] = {
 	{
@@ -51,12 +51,12 @@ static GOptionEntry const sstest_options [] = {
 		N_("Display program version"),
 		NULL
 	},
-	{
-		"export-slicer-data", 0,
-		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &sstest_slicer_file,
-		N_("The data file to export"),
-		NULL
-	},
+	//~ {
+		//~ "export-slicer-data", 0,
+		//~ G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &sstest_slicer_file,
+		//~ N_("The data file to export"),
+		//~ NULL
+	//~ },
 
 	{ NULL }
 };
@@ -233,7 +233,7 @@ test_func_help (void)
  */
 
 static void
-test_go_data_cache_build_cache(GOCmdContext *cc)
+test_go_data_cache_build_cache(void)
 {
 	Workbook *wb;
 	Sheet *sheet;
@@ -454,7 +454,7 @@ main (int argc, char const **argv)
 
 	MAYBE_DO ("test_insdel_rowcol_names") test_insdel_rowcol_names ();
 	MAYBE_DO ("test_func_help") test_func_help ();
-	MAYBE_DO ("test_go_data_cache_build_cache") test_go_data_cache_build_cache(cc);
+	MAYBE_DO ("test_go_data_cache_build_cache") test_go_data_cache_build_cache();
 	MAYBE_DO ("test_go_data_slicer_tuple_compare_to") test_go_data_slicer_tuple_compare_to ();
 
 	/* ---------------------------------------- */
