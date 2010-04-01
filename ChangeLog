@@ -1,3 +1,25 @@
+2010-03-25 Andreas J. Guelzow <aguelzow@pyrshep.ca>
+
+	* src/gnumeric-gconf.c (set_string_list): since go_conf_set_str_list
+	  may trigger cb_watch_string_list that uses string_list_pool, we need
+	  to fix the hash table first. 
+
+2010-03-23  Morten Welinder  <terra@gnome.org>
+
+	* src/wbc-gtk.c (cb_paned_size_allocate): Improve handling of
+	too-narrow windows.  Show more tabs for wide windows.
+	(cb_status_size_allocate): New function to trigger repartition
+	after window resize.
+
+	* src/wbc-gtk-actions.c (permanent_actions): Move FileNew,
+	FileOpen, and a few more actions here.
+
+2010-03-13 Andreas J. Guelzow <aguelzow@pyrshep.ca>
+
+	* src/item-bar.c (item_bar_calc_size): use pango_itemize to create
+	  PangoItem and PangoAnalysis
+	(item_bar_init): initialize pango.item to NULL
+
 2010-03-13 Andreas J. Guelzow <aguelzow@pyrshep.ca>
 
 	* src/wbc-gtk-actions.c (wbc_gtk_init_actions): move disabling
