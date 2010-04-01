@@ -112,15 +112,16 @@ go_data_cache_collect_content (GnmCellIter const *iter, gpointer userData)
 	GnmValue *vClone;
 	gpointer *value;
 	GnmValue *v;
-
 	GnmCell const *cell = (iter->pp.sheet == uc->src_sheet) ? iter->cell
 		: sheet_cell_get (uc->src_sheet,
 			iter->pp.eval.col, iter->pp.eval.row);
 	if (gnm_cell_is_blank (cell)) {
 		uc->has_blank = TRUE;
+		v = go_val_new_empty();
+	} else {
+		v = cell->value;
 	}
-	
-	v = cell->value;
+
 	// Check that the GnmValue v is not already in the hash table.
 	if (g_hash_table_lookup (uc->hash, v) == NULL) {
 		hashSize = g_hash_table_size (uc->hash);
@@ -139,7 +140,6 @@ go_data_cache_collect_content (GnmCellIter const *iter, gpointer userData)
 		if (hashSize + 1 > maxUniqueForIndexed) {
 			return VALUE_TERMINATE;
 		}
-
 		vClone = value_dup (v);
 		g_ptr_array_add(indexed, vClone);	
 		value = (gpointer *) g_malloc(sizeof(gpointer));
@@ -203,7 +203,7 @@ go_data_cache_create_all_fields(GODataCache * cache, Sheet * sheet, GPtrArray *h
 		((GOValArray **)userData)[1] = indexed;
 		// Array containing number of rows and limit.
 		((int **)userData)[2] = intArr;
-		
+
 		// Apply the unique filter to each cell in the range.
 		terminated = sheet_foreach_cell_in_range (sheet, CELL_ITER_IGNORE_HIDDEN,
 				col, cellRange->start.row, col, cellRange->end.row,
@@ -241,6 +241,7 @@ go_data_cache_create_all_fields(GODataCache * cache, Sheet * sheet, GPtrArray *h
 void 
 go_data_cache_build_cache(GODataCache * cache, Sheet *sheet, GnmRange * cellRange){
 	GODataCacheField * f;
+	GnmCell *cell;
 	GnmValue *val;
 	gpointer value;
 	unsigned int idx;
@@ -250,22 +251,30 @@ go_data_cache_build_cache(GODataCache * cache, Sheet *sheet, GnmRange * cellRang
 	// Create all the cache fields first.
 	GPtrArray *hashedIdx = g_ptr_array_new ();
 	go_data_cache_create_all_fields(cache, sheet, hashedIdx, cellRange);
-	
 	go_data_cache_import_start(cache, numRows);
-	
 	for (i = 0; i < cache->fields->len; i++) {
 		f = g_ptr_array_index(cache->fields, i);
 		// If the cache field is inline.
 		if (f->ref_type == GO_DATA_CACHE_FIELD_TYPE_INLINE) {
-			for (j = 0; j < numRows; j++) {	
-				val = (sheet_cell_get(sheet,i,j))->value;
-				go_data_cache_set_val(cache, i, j, value_dup(val));
+			for (j = 0; j < numRows; j++) {
+				cell = sheet_cell_get(sheet,i,j);
+				if (gnm_cell_is_blank (cell)) {
+					val = go_val_new_empty();
+				} else {
+					val = value_dup((cell)->value);
+				}
+				go_data_cache_set_val(cache, i, j, val);
 			}
 		// If the cache field is indexed.
 		} else {
 			GHashTable *hIdx = g_ptr_array_index(hashedIdx, i);
 			for (j = 0; j < numRows; j++) {
-				val = (sheet_cell_get(sheet,i,j))->value;
+				cell = sheet_cell_get(sheet,i,j);
+				if (gnm_cell_is_blank (cell)) {
+					val = go_val_new_empty();
+				} else {
+					val = (cell)->value;
+				}
 				value = g_hash_table_lookup(hIdx, val);
 				// If the cell has no value.
 				if (value == NULL) {
