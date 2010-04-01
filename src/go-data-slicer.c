@@ -210,7 +210,7 @@ void go_data_slicer_create_cache(GODataSlicer *self, Sheet * sheet, GnmRange * r
      self->cache = cache;
 
      /*Create overlay*/
-   	 self->cache_overlay = g_object_new(GO_DATA_SLICER_CACHE_OVERLAY_TYPE, "num_records", go_data_cache_num_items(cache), NULL);
+   	 self->cache_overlay = g_object_new(GO_DATA_SLICER_CACHE_OVERLAY_TYPE, "num_records", go_data_cache_num_items(cache), "cache", self->cache, NULL);
 }
 
 /**
@@ -252,7 +252,7 @@ go_data_slicer_set_cache (GODataSlicer *self, GODataCache *cache)
 	}
 	
 	self->cache = cache;
-	self->cache_overlay = g_object_new(GO_DATA_SLICER_CACHE_OVERLAY_TYPE, "num_records", go_data_cache_num_items(self->cache), NULL);
+	self->cache_overlay = g_object_new(GO_DATA_SLICER_CACHE_OVERLAY_TYPE, "num_records", go_data_cache_num_items(self->cache), "cache", self->cache, NULL);
 }
 
 /* 
