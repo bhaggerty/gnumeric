@@ -9,10 +9,10 @@ use XML::Parser;
 @GnumericTest::EXPORT = qw(test_cache_slicer test_sheet_calc test_importer test_valgrind
 			   test_ssindex sstest sstestslicer test_command message
 			   $ssconvert $sstest $topsrc $top_builddir
-			   $samples $PERL);
+			   $samples $test $PERL);
 @GnumericTest::EXPORT_OK = qw(junkfile);
 
-use vars qw($topsrc $top_builddir $samples $PERL $verbose);
+use vars qw($test $topsrc $top_builddir $samples $PERL $verbose);
 use vars qw($ssconvert $ssindex $sstest);
 
 $topsrc = $0;
@@ -21,6 +21,7 @@ $topsrc =~ s|/test/\.\.$||;
 
 $top_builddir = "..";
 $samples = "$topsrc/samples";
+$test = "$topsrc/test";
 $ssconvert = "$top_builddir/src/ssconvert";
 $ssindex = "$top_builddir/src/ssindex";
 $sstest = "$top_builddir/src/sstest";
@@ -282,8 +283,11 @@ sub test_sheet_calc {
 
 sub test_cache_slicer {
     my $file = shift @_;
+    my $opt = shift @_;
+    my $row = shift @_;
+    my $col = shift @_;
+    my $dump_file = shift @_;
     my $pargs = (ref $_[0]) ? shift @_ : [];
-    my ($range,$expected) = @_;
 
     &report_skip ("file $file does not exist") unless -r $file;
 
@@ -293,28 +297,14 @@ sub test_cache_slicer {
 
     my $code = system ("$ssconvert " .
 		       join (" ", @$pargs) .
-		       " --recalc --gen-cache '$file' '$tmp' 2>&1 | sed -e 's/^/| /'");
+		       " --$opt --data-row=$row --data-col=$col '$file' '$tmp' > '$dump_file' | sed -e 's/^/| /'");
+    
     &system_failure ($ssconvert, $code) if $code;
 
-    my $actual = &read_file ($tmp);
-
-    my $ok;
-    if (ref $expected) {
-	local $_ = $actual;
-	$ok = &$expected ($_);
-    } else {
-	$ok = ($actual eq $expected);
-    }
-
     &removejunk ($tmp);
-
-    if ($ok) {
-	print STDERR "Pass\n";
-    } else {
-	$actual =~ s/\s+$//;
-	&dump_indented ($actual);
-	die "Fail.\n\n";
-    }
+    
+    print STDERR "Dumped data to file $dump_file\n";
+    
 }
 
 # -----------------------------------------------------------------------------
