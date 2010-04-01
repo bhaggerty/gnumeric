@@ -56,10 +56,12 @@ enum {
 };
 
 typedef struct {
-	gboolean has_blank;
 	GHashTable *hash;
-	GODateConventions const *date_conv;
 	Sheet *src_sheet;
+	GOValArray * indexed;
+	int numRows;
+	int maxUniqueForIndexed;
+
 } UniqueCollection;
 
 /* Distinguish between the same value with different formats */
@@ -78,7 +80,7 @@ formatted_value_equal (GnmValue const *a, GnmValue const *b)
  * than limit, this cache field such be set as inline. Return An integer whoses values 
  * represents the max number of indexed elements in a column.
  */
-static int 
+static int
 go_data_cache_max_unique_for_indexed(int cacheFieldSize, int numRows) {
 	// Memory saved by using indices divided by size of GnmValue pointer.
 	return numRows * ((8 * sizeof(GnmValue *)) - cacheFieldSize) / (8 * sizeof(GnmValue *));
@@ -99,49 +101,39 @@ go_data_cache_collect_content (GnmCellIter const *iter, gpointer userData)
 {
 	// Seperate userData into respective arguments.
 	// uc is a container for the hash table.
-	UniqueCollection * uc = ((UniqueCollection **) userData)[0];
-	// index is the array of unique values.
-	GOValArray * indexed = ((GOValArray **) userData)[1];
-	// intArr is the numrows and limit.
-	int * intArr = ((int **) userData)[2];
-	
-	int numRows = intArr[0];
-	unsigned int maxUniqueForIndexed = intArr[1];
-	
+	UniqueCollection * uc = (UniqueCollection *)userData;
+
 	guint hashSize;
 	GnmValue *vClone;
 	gpointer *value;
 	GnmValue *v;
-
 	GnmCell const *cell = (iter->pp.sheet == uc->src_sheet) ? iter->cell
 		: sheet_cell_get (uc->src_sheet,
 			iter->pp.eval.col, iter->pp.eval.row);
 	if (gnm_cell_is_blank (cell)) {
-		uc->has_blank = TRUE;
+		v = go_val_new_empty();
+	} else {
+		v = cell->value;
 	}
-	
-	v = cell->value;
+
 	// Check that the GnmValue v is not already in the hash table.
 	if (g_hash_table_lookup (uc->hash, v) == NULL) {
 		hashSize = g_hash_table_size (uc->hash);
-		//int numRows = intArr[0];
 
 		// Find the limits for varying index sizes.
 		if (hashSize + 1 == (1<<8)) {
-			intArr[1] = go_data_cache_max_unique_for_indexed(16, numRows);
+			uc->maxUniqueForIndexed = go_data_cache_max_unique_for_indexed(16, uc->numRows);
 		} else if (hashSize + 1 == (1<<16)) {
-			intArr[1] = go_data_cache_max_unique_for_indexed(32, numRows);
+			uc->maxUniqueForIndexed = go_data_cache_max_unique_for_indexed(32, uc->numRows);
 		}
 
 		// If size of hash is larger than limit, we can stop finding unique
 		// values since this cache field will be set as inline.
-		maxUniqueForIndexed = intArr[1];
-		if (hashSize + 1 > maxUniqueForIndexed) {
+		if (((int)hashSize + 1) > uc->maxUniqueForIndexed) {
 			return VALUE_TERMINATE;
 		}
-
 		vClone = value_dup (v);
-		g_ptr_array_add(indexed, vClone);	
+		g_ptr_array_add(uc->indexed, vClone);	
 		value = (gpointer *) g_malloc(sizeof(gpointer));
 		*value = GUINT_TO_POINTER(hashSize);
 		g_hash_table_replace (uc->hash, vClone, value);
@@ -173,42 +165,25 @@ go_data_cache_dump_hash_table(GHashTable* ht) {
  */
 void 
 go_data_cache_create_all_fields(GODataCache * cache, Sheet * sheet, GPtrArray *hashedIdx, GnmRange * cellRange) {
-	int numRows;
 	UniqueCollection uc;
-	int intArr[2];
 	GOValArray * indexed;
-	gpointer * userData;
 	GnmValue * terminated;
 	GODataCacheField * tempCacheField;
 	int col;
 	
 	for (col = cellRange->start.col; col <= cellRange->end.col; col++) {
-		numRows = cellRange->end.row - cellRange->start.row + 1;
-		uc.has_blank = FALSE;
 		uc.hash = g_hash_table_new_full ((GHashFunc)value_hash, (GEqualFunc)formatted_value_equal,
 			(GDestroyNotify)value_release, (GDestroyNotify)g_free);
 		uc.src_sheet = sheet;
-		uc.date_conv = workbook_date_conv (uc.src_sheet->workbook);
-		
-		// Set up arguments to pass to unique filter.
-		intArr[0] = numRows;
+		uc.numRows = cellRange->end.row - cellRange->start.row + 1;
 		// Find limit for 8 bit indices here to save time computing later.
-		intArr[1] = go_data_cache_max_unique_for_indexed(8, numRows);
+		uc.maxUniqueForIndexed = go_data_cache_max_unique_for_indexed(8, uc.numRows);
 		indexed = g_ptr_array_new();
-		userData = (gpointer *) g_malloc(sizeof(gpointer) * 3);
-		
-		// UniqueCollection containing hash table of unique values.
-		((UniqueCollection **)userData)[0] = &uc;
-		// GOValArray of unique values.
-		((GOValArray **)userData)[1] = indexed;
-		// Array containing number of rows and limit.
-		((int **)userData)[2] = intArr;
-		
+		uc.indexed = indexed;
 		// Apply the unique filter to each cell in the range.
 		terminated = sheet_foreach_cell_in_range (sheet, CELL_ITER_IGNORE_HIDDEN,
 				col, cellRange->start.row, col, cellRange->end.row,
-				(CellIterFunc)&go_data_cache_collect_content, userData);
-		g_free(userData);
+				(CellIterFunc)&go_data_cache_collect_content, &uc);
 
 		if(terminated != NULL) {
 			indexed = NULL;
@@ -241,6 +216,7 @@ go_data_cache_create_all_fields(GODataCache * cache, Sheet * sheet, GPtrArray *h
 void 
 go_data_cache_build_cache(GODataCache * cache, Sheet *sheet, GnmRange * cellRange){
 	GODataCacheField * f;
+	GnmCell *cell;
 	GnmValue *val;
 	gpointer value;
 	unsigned int idx;
@@ -250,22 +226,30 @@ go_data_cache_build_cache(GODataCache * cache, Sheet *sheet, GnmRange * cellRang
 	// Create all the cache fields first.
 	GPtrArray *hashedIdx = g_ptr_array_new ();
 	go_data_cache_create_all_fields(cache, sheet, hashedIdx, cellRange);
-	
 	go_data_cache_import_start(cache, numRows);
-	
 	for (i = 0; i < cache->fields->len; i++) {
 		f = g_ptr_array_index(cache->fields, i);
 		// If the cache field is inline.
 		if (f->ref_type == GO_DATA_CACHE_FIELD_TYPE_INLINE) {
-			for (j = 0; j < numRows; j++) {	
-				val = (sheet_cell_get(sheet,i,j))->value;
-				go_data_cache_set_val(cache, i, j, value_dup(val));
+			for (j = 0; j < numRows; j++) {
+				cell = sheet_cell_get(sheet,i,j);
+				if (gnm_cell_is_blank (cell)) {
+					val = go_val_new_empty();
+				} else {
+					val = value_dup((cell)->value);
+				}
+				go_data_cache_set_val(cache, i, j, val);
 			}
 		// If the cache field is indexed.
 		} else {
 			GHashTable *hIdx = g_ptr_array_index(hashedIdx, i);
 			for (j = 0; j < numRows; j++) {
-				val = (sheet_cell_get(sheet,i,j))->value;
+				cell = sheet_cell_get(sheet,i,j);
+				if (gnm_cell_is_blank (cell)) {
+					val = go_val_new_empty();
+				} else {
+					val = (cell)->value;
+				}
 				value = g_hash_table_lookup(hIdx, val);
 				// If the cell has no value.
 				if (value == NULL) {

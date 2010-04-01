@@ -2,10 +2,20 @@ Gnumeric 1.10.2
 
 Andreas:
 
-	* fix build with --disable-solver. [#612820]
+	* Fix build with --disable-solver. [#612820]
+	* Fix column and row header display under Quartz. [#600085]
+	* Fix preferences in gconf-less situations. [#613523]
+	* Implement first letter capitalization. [#613768]
+	* Extend regression tool to perform multiple simple regressions.
+	  [#614031]
+
 Morten:
 	* Improve object sizing tooltip positioning a bit.
 	* Fix filter critical.  [#611073]
+	* Make more menu entries available when an object is selected.
+	* Improve partitioning of status area.
+	* Fix goal seek problem affecting XIRR.  [#614147]
+	* Fix export xls of XIRR, FVSCHEDULE, and XNPV.  [#614257]
 
 --------------------------------------------------------------------------
 Gnumeric 1.10.1

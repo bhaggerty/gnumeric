@@ -1,3 +1,39 @@
+2010-03-31 Andreas J. Guelzow <aguelzow@pyrshep.ca>
+
+	* regression.glade: add radio buttons
+	* dialog-analysis-tools.c (regression_tool_ok_clicked_cb): handle 
+	  new radio buttons
+
+2010-03-25 Andreas J. Guelzow <aguelzow@pyrshep.ca>
+
+	* dialog-preferences.c (int_pref_widget_to_conf): get the
+	  values from the main configuration
+	(int_pref_create_widget): add argument and
+	  change all callers, always use the correct initial value.
+
+2010-03-25 Andreas J. Guelzow <aguelzow@pyrshep.ca>
+
+	* dialog-preferences.c (enum_pref_create_widget): add argument and
+	  change all callers, always use the correct initial value.
+	
+2010-03-24 Andreas J. Guelzow <aguelzow@pyrshep.ca>
+
+	* dialog-preferences.c (wordlist_pref_remove): fix leak
+	(wordlist_pref_add): ditto
+
+2010-03-24 Andreas J. Guelzow <aguelzow@pyrshep.ca>
+
+	* dialog-preferences.c (wordlist_pref_remove): get and set list 
+	  via gnumeric-gconf
+	(wordlist_pref_add): ditto
+	(wordlist_pref_create_widget): add getter and setter to argumanets
+	  and change all callers. Store thie info with the buttons
+
+2010-03-23 Andreas J. Guelzow <aguelzow@pyrshep.ca>
+
+	* dialog-preferences.c: fix boolean preferences under goffice 
+	  configured --without-gconf
+
 2010-03-08  Morten Welinder <terra@gnome.org>
 
 	* Release 1.10.1

@@ -39,6 +39,10 @@
 #include "go-data-cache.h"
 #include "gnm-data-cache-source.h"
 #include "ranges.h"
+#include "go-data-slicer.h"
+#include "go-data-slicer-cache-overlay.h"
+#include "go-data-slicer-index.h"
+#include "go-data-slicer-tuple.h"
 
 static gboolean ssconvert_show_version = FALSE;
 static gboolean ssconvert_list_exporters = FALSE;
@@ -48,7 +52,8 @@ static gboolean ssconvert_recalc = FALSE;
 static gboolean ssconvert_solve = FALSE;
 static gboolean ssconvert_gencache = FALSE;
 static gboolean ssconvert_genslicer = FALSE;
-static gboolean ssconvert_dumpcache = FALSE;
+static gint ssconvert_row = 0;
+static gint ssconvert_col = 0;
 static char *ssconvert_range = NULL;
 static char *ssconvert_import_encoding = NULL;
 static char *ssconvert_import_id = NULL;
@@ -152,15 +157,22 @@ static const GOptionEntry ssconvert_options [] = {
 	
 	{
 		"gen-slicer", 0,
-		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &ssconvert_gencache,
+		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &ssconvert_genslicer,
 		N_("Generate slicer here"),
 		NULL
 	},
 	
 	{
-		"dump-cache", 0,
-		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &ssconvert_dumpcache,
-		N_("Dump cache to file"),
+		"data-row", 0,
+		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_INT, &ssconvert_row,
+		N_("The number of rows in the data"),
+		NULL
+	},
+	
+	{
+		"data-col", 0,
+		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_INT, &ssconvert_col,
+		N_("the number of cols in the data"),
 		NULL
 	},
 
@@ -624,14 +636,34 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 			if (ssconvert_gencache) {
 				GODataCache *cache = g_object_new(GO_DATA_CACHE_TYPE, NULL);
 				GnmRange *range = g_new(GnmRange, 1);
-				range = range_init(range, 0, 0, 4, 20);
-				g_print("got here first?\n");
+				range = range_init(range, 0, 0, ssconvert_col - 1, ssconvert_row - 1);
 				go_data_cache_build_cache(cache, sheet, range);
-				g_print("got here\n");
 				go_data_cache_dump(cache, NULL, NULL);
 			}
 			
 			if (ssconvert_genslicer) {
+				GnmRange *range = g_new(GnmRange, 1);
+				GODataSlicer * self;
+				GODataCache * cache;
+				GArray *rowFields;
+				GArray *colFields;
+				guint row = 0;
+				guint col = 1;
+				range = range_init(range, 0, 0, ssconvert_col - 1, ssconvert_row - 1);
+				self = g_object_new(GO_DATA_SLICER_TYPE, "name", NULL, "aggregate_function", COUNT, NULL);
+				go_data_slicer_create_cache(self, sheet, range);
+				cache = go_data_slicer_get_cache(self);
+				//~ go_data_cache_dump(cache, NULL, NULL);
+				rowFields = g_array_new(FALSE, FALSE, sizeof(guint));
+				g_array_append_val(rowFields, row);
+				colFields = g_array_new(FALSE, FALSE, sizeof(guint));
+				g_array_append_val(colFields, col);
+				go_data_slicer_set_row_field_index(self, rowFields);
+				go_data_slicer_set_col_field_index(self, colFields);
+				go_data_slicer_set_data_field_index(self, 2);
+				go_data_slicer_index_cache(self);
+				go_data_slicer_slice_cache(self);
+				go_data_slicer_dump_slicer(self);
 			}
 
 			if (ssconvert_range)

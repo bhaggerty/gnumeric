@@ -934,7 +934,7 @@ cb_paned_size_allocate (GtkHPaned *hpaned,
 	GtkWidget *widget = (GtkWidget *)paned;
 	GtkRequisition child1_requisition;
 	gint handle_size;
-	gint p1, p2, h1, h2, w1, w2, w;
+	gint p1, p2, h1, h2, w1, w2, w, wp;
 	gint border_width = GTK_CONTAINER (paned)->border_width;
 	gboolean position_set;
 	GtkWidget *child1 = paned->child1;
@@ -969,8 +969,20 @@ cb_paned_size_allocate (GtkHPaned *hpaned,
 
 	gtk_widget_style_get (widget, "handle-size", &handle_size, NULL);
 	w = widget->allocation.width - handle_size - 2 * border_width;
-	p1 = MIN (w / 3, child1->requisition.width);
-	p2 = w - p1;
+	p1 = MAX (0, w / 2);
+
+	/*
+	 * Don't let the status text take up more then 125% of the space
+	 * used for auto-expr and other little things.  This helps with
+	 * wide windows.
+	 */
+	wp = GTK_WIDGET (hpaned)->parent->allocation.width;
+	p1 = MAX (p1, w - (wp - w) * 125 / 100);
+
+	/* However, never use more for tabs than we want.  */
+	p1 = MIN (p1, child1->requisition.width);
+
+	p2 = MAX (0, w - p1);
 
 	if (p1 < child1->requisition.width) {
 		/*
@@ -1024,6 +1036,18 @@ cb_bnotebook_button_press (GtkWidget *widget, GdkEventButton *event)
 	}
 
 	return FALSE;
+}
+
+static void
+cb_status_size_allocate (GtkWidget *widget,
+			 GtkAllocation *allocation,
+			 WBCGtk *wbcg)
+{
+	GTK_WIDGET_GET_CLASS(widget)->size_allocate (widget, allocation);
+	if (allocation->width != wbcg->status_area_width) {
+		signal_paned_repartition (wbcg->tabs_paned);
+		wbcg->status_area_width = allocation->width;
+	}
 }
 
 static void
@@ -4392,6 +4416,9 @@ wbc_gtk_create_status_area (WBCGtk *wbcg)
 			  NULL);
 
 	wbcg->status_area = gtk_hbox_new (FALSE, 2);
+	g_signal_connect (G_OBJECT (wbcg->status_area),
+			  "size-allocate", G_CALLBACK (cb_status_size_allocate),
+			  wbcg);
 	gtk_box_pack_start (GTK_BOX (wbcg->status_area),
 			    GTK_WIDGET (wbcg->tabs_paned),
 			    TRUE, TRUE, 0);
