@@ -208,6 +208,16 @@ go_data_slicer_get_page_filter_tuples(GODataSlicer *self, guint page_filter_num)
 GOVal *
 go_data_slicer_get_value_at(GODataSlicer *self, int x, int y);
 
+/**
+ * dump_slicer
+ *
+ * @self: This GODataSlicer
+ * 
+ * Prints a string representation of this GODataSlicer to stdout
+ */
+void
+go_data_slicer_dump_slicer(GODataSlicer *self);
+
 G_END_DECLS
 
 #endif /* GO_DATA_SLICER_H */

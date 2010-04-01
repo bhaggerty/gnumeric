@@ -35,6 +35,7 @@
 #include <gsf/gsf-impl-utils.h>
 #include <glib/gi18n-lib.h>
 #include <string.h>
+#include <glib/gprintf.h>
 
 #define GO_DATA_SLICER_CLASS(k)		(G_TYPE_CHECK_CLASS_CAST ((k), GO_DATA_SLICER_TYPE, GODataSlicerClass))
 #define IS_GO_DATA_SLICER_CLASS(k)	(G_TYPE_CHECK_CLASS_TYPE ((k), GO_DATA_SLICER_TYPE))
@@ -273,7 +274,7 @@ go_data_slicer_create_index (GODataSlicer *self, GArray * tuple_template) {
     }
 
     /*Construct a new SlicerIndex for column fields*/
-    return g_object_new(GO_DATA_SLICER_INDEX_TYPE, "cache", self->cache, "tuple_template", cache_fields);
+    return g_object_new(GO_DATA_SLICER_INDEX_TYPE, "cache", self->cache, "tuple_template", cache_fields, NULL);
 }
 
 void go_data_slicer_set_col_field_index (GODataSlicer *self, GArray * tuple_template) {
@@ -486,5 +487,36 @@ go_data_slicer_get_value_at(GODataSlicer *self, int x, int y) {
 
     /*Perform lookup*/
     return (GOVal *) g_hash_table_lookup(self->view, &key);
+}
+
+/*Prints something akin to an OpenOffice Data Pilot table*/
+void
+go_data_slicer_dump_slicer(GODataSlicer *self) {
+
+     guint i,j,row_tuple_in_order_num=-1, col_tuple_in_order_num=-1;
+     GOVal * value;
+     
+     GPtrArray * row_tuples = self->row_field->get_all_tuples(self->row_field);
+     GPtrArray * col_tuples = self->col_field->get_all_tuples(self->col_field);
+
+     /*Need loops to go one index further than the number of tuples to print subtotals*/
+     for (i=0;i<=row_tuples->len;i++) {
+
+          if (i==col_tuples->len) {
+              row_tuple_in_order_num++;
+          } else {
+              row_tuple_in_order_num = ((GODataSlicerIndexedTuple *)(g_ptr_array_index(row_tuples,i)))->relative_position;               
+          }
+
+          for (j=0;j<=col_tuples->len;j++) {
+               if (j==col_tuples->len) {
+                    col_tuple_in_order_num++;
+               } else {
+                    col_tuple_in_order_num = ((GODataSlicerIndexedTuple *)(g_ptr_array_index(col_tuples,j)))->relative_position;                    
+               }
+               value = go_data_slicer_get_value_at(self, col_tuple_in_order_num, row_tuple_in_order_num);
+               g_printf("%f ", ((GnmValueFloat*)value)->val);
+          }
+     }
 }
 
