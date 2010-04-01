@@ -47,6 +47,7 @@ static gboolean ssconvert_one_file_per_sheet = FALSE;
 static gboolean ssconvert_recalc = FALSE;
 static gboolean ssconvert_solve = FALSE;
 static gboolean ssconvert_gencache = FALSE;
+static gboolean ssconvert_genslicer = FALSE;
 static gboolean ssconvert_dumpcache = FALSE;
 static char *ssconvert_range = NULL;
 static char *ssconvert_import_encoding = NULL;
@@ -146,6 +147,13 @@ static const GOptionEntry ssconvert_options [] = {
 		"gen-cache", 0,
 		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &ssconvert_gencache,
 		N_("Generate cache here"),
+		NULL
+	},
+	
+	{
+		"gen-slicer", 0,
+		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &ssconvert_gencache,
+		N_("Generate slicer here"),
 		NULL
 	},
 	
@@ -621,6 +629,9 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 				go_data_cache_build_cache(cache, sheet, range);
 				g_print("got here\n");
 				go_data_cache_dump(cache, NULL, NULL);
+			}
+			
+			if (ssconvert_genslicer) {
 			}
 
 			if (ssconvert_range)
