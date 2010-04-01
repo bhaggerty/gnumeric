@@ -39,6 +39,10 @@
 #include "go-data-cache.h"
 #include "gnm-data-cache-source.h"
 #include "ranges.h"
+#include "go-data-slicer.h"
+#include "go-data-slicer-cache-overlay.h"
+#include "go-data-slicer-index.h"
+#include "go-data-slicer-tuple.h"
 
 static gboolean ssconvert_show_version = FALSE;
 static gboolean ssconvert_list_exporters = FALSE;
@@ -152,7 +156,7 @@ static const GOptionEntry ssconvert_options [] = {
 	
 	{
 		"gen-slicer", 0,
-		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &ssconvert_gencache,
+		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &ssconvert_genslicer,
 		N_("Generate slicer here"),
 		NULL
 	},
@@ -632,6 +636,43 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 			}
 			
 			if (ssconvert_genslicer) {
+				GnmRange *range = g_new(GnmRange, 1);
+				GODataSlicer * self;
+				GODataCache * cache;
+				//~ GPtrArray *rowFields;
+				//~ GPtrArray *colFields;
+				GArray *rowFields;
+				GArray *colFields;
+				guint row = 0;
+				guint col = 1;
+				//~ GODataCacheField *row;
+				//~ GODataCacheField *col;
+				range = range_init(range, 0, 0, 3, 10);
+				self = g_object_new(GO_DATA_SLICER_TYPE, "name", NULL, "aggregate_function", SUM, NULL);
+				go_data_slicer_create_cache(self, sheet, range);
+				cache = go_data_slicer_get_cache(self);
+				go_data_cache_dump(cache, NULL, NULL);
+				rowFields = g_array_new(FALSE, TRUE, sizeof(guint));
+				//~ row = go_data_cache_get_field(cache,0);
+				g_array_append_val(rowFields, row);
+				printf("rowFields.length: %d\n", rowFields->len);
+				//~ rowFields = g_ptr_array_new();
+				//~ g_ptr_array_add(rowFields, go_data_cache_get_field(cache, 1));
+				//~ g_ptr_array_add(rowFields, go_data_cache_get_field(cache, 2));
+				//~ col = go_data_cache_get_field(cache, 1);
+				colFields = g_array_new(FALSE, TRUE, sizeof(guint));
+				g_array_append_val(colFields, col);
+				printf("colFields.length: %d\n", colFields->len);
+				printf("index: %u\n", g_array_index(colFields, guint, 0));
+				//~ colFields = g_ptr_array_new();
+				//~ g_ptr_array_add(colFields, go_data_cache_get_field(cache, 1));
+				//~ g_ptr_array_add(rowFields, go_data_cache_get_field(cache, 2));
+				go_data_slicer_set_row_field_index(self, rowFields);
+				go_data_slicer_set_col_field_index(self, colFields);
+				go_data_slicer_set_data_field_index(self, 2);
+				go_data_slicer_index_cache(self);
+				go_data_slicer_slice_cache(self);
+				go_data_slicer_dump_slicer(self);
 			}
 
 			if (ssconvert_range)
