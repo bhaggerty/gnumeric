@@ -156,7 +156,7 @@ go_data_slicer_set_property (GObject *obj, guint property_id,
 	switch (property_id) {
 	case PROP_CACHE : go_data_slicer_set_cache (ds, g_value_get_object (value)); break;
 	case PROP_NAME :  go_string_unref (ds->name); ds->name = g_value_dup_boxed (value); break;
-	case PROP_AGGFUNC : ds->aggregate_function = g_value_get_enum (value); break;
+	case PROP_AGGFUNC : ds->aggregate_function = g_value_get_uint (value); break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (obj, property_id, pspec);
 	}
@@ -170,7 +170,7 @@ go_data_slicer_get_property (GObject *obj, guint property_id,
 	switch (property_id) {
 	case PROP_CACHE : g_value_set_object (value, ds->cache); break;
 	case PROP_NAME  : g_value_set_boxed (value, ds->name); break;
-	case PROP_AGGFUNC  : g_value_set_enum(value, ds->aggregate_function); break;
+	case PROP_AGGFUNC  : g_value_set_uint(value, ds->aggregate_function); break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (obj, property_id, pspec);
 	}
