@@ -52,7 +52,8 @@ static gboolean ssconvert_recalc = FALSE;
 static gboolean ssconvert_solve = FALSE;
 static gboolean ssconvert_gencache = FALSE;
 static gboolean ssconvert_genslicer = FALSE;
-static gboolean ssconvert_dumpcache = FALSE;
+static gint ssconvert_row = 0;
+static gint ssconvert_col = 0;
 static char *ssconvert_range = NULL;
 static char *ssconvert_import_encoding = NULL;
 static char *ssconvert_import_id = NULL;
@@ -162,9 +163,16 @@ static const GOptionEntry ssconvert_options [] = {
 	},
 	
 	{
-		"dump-cache", 0,
-		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &ssconvert_dumpcache,
-		N_("Dump cache to file"),
+		"data-row", 0,
+		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_INT, &ssconvert_row,
+		N_("The number of rows in the data"),
+		NULL
+	},
+	
+	{
+		"data-col", 0,
+		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_INT, &ssconvert_col,
+		N_("the number of cols in the data"),
 		NULL
 	},
 
@@ -628,10 +636,8 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 			if (ssconvert_gencache) {
 				GODataCache *cache = g_object_new(GO_DATA_CACHE_TYPE, NULL);
 				GnmRange *range = g_new(GnmRange, 1);
-				range = range_init(range, 0, 0, 4, 20);
-				g_print("got here first?\n");
+				range = range_init(range, 0, 0, ssconvert_col - 1, ssconvert_row - 1);
 				go_data_cache_build_cache(cache, sheet, range);
-				g_print("got here\n");
 				go_data_cache_dump(cache, NULL, NULL);
 			}
 			
@@ -639,34 +645,19 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 				GnmRange *range = g_new(GnmRange, 1);
 				GODataSlicer * self;
 				GODataCache * cache;
-				//~ GPtrArray *rowFields;
-				//~ GPtrArray *colFields;
 				GArray *rowFields;
 				GArray *colFields;
 				guint row = 0;
 				guint col = 1;
-				//~ GODataCacheField *row;
-				//~ GODataCacheField *col;
-				range = range_init(range, 0, 0, 3, 10);
-				self = g_object_new(GO_DATA_SLICER_TYPE, "name", NULL, "aggregate_function", SUM, NULL);
+				range = range_init(range, 0, 0, ssconvert_col - 1, ssconvert_row - 1);
+				self = g_object_new(GO_DATA_SLICER_TYPE, "name", NULL, "aggregate_function", COUNT, NULL);
 				go_data_slicer_create_cache(self, sheet, range);
 				cache = go_data_slicer_get_cache(self);
 				go_data_cache_dump(cache, NULL, NULL);
-				rowFields = g_array_new(FALSE, TRUE, sizeof(guint));
-				//~ row = go_data_cache_get_field(cache,0);
+				rowFields = g_array_new(FALSE, FALSE, sizeof(guint));
 				g_array_append_val(rowFields, row);
-				printf("rowFields.length: %d\n", rowFields->len);
-				//~ rowFields = g_ptr_array_new();
-				//~ g_ptr_array_add(rowFields, go_data_cache_get_field(cache, 1));
-				//~ g_ptr_array_add(rowFields, go_data_cache_get_field(cache, 2));
-				//~ col = go_data_cache_get_field(cache, 1);
-				colFields = g_array_new(FALSE, TRUE, sizeof(guint));
+				colFields = g_array_new(FALSE, FALSE, sizeof(guint));
 				g_array_append_val(colFields, col);
-				printf("colFields.length: %d\n", colFields->len);
-				printf("index: %u\n", g_array_index(colFields, guint, 0));
-				//~ colFields = g_ptr_array_new();
-				//~ g_ptr_array_add(colFields, go_data_cache_get_field(cache, 1));
-				//~ g_ptr_array_add(rowFields, go_data_cache_get_field(cache, 2));
 				go_data_slicer_set_row_field_index(self, rowFields);
 				go_data_slicer_set_col_field_index(self, colFields);
 				go_data_slicer_set_data_field_index(self, 2);
