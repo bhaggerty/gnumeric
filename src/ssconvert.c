@@ -43,6 +43,7 @@
 #include "go-data-slicer-cache-overlay.h"
 #include "go-data-slicer-index.h"
 #include "go-data-slicer-tuple.h"
+#include "value.h"
 
 static gboolean ssconvert_show_version = FALSE;
 static gboolean ssconvert_list_exporters = FALSE;
@@ -647,20 +648,32 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 				GODataCache * cache;
 				GArray *rowFields;
 				GArray *colFields;
-				guint row = 0;
-				guint col = 1;
+				guint col;
 				range = range_init(range, 0, 0, ssconvert_col - 1, ssconvert_row - 1);
 				self = g_object_new(GO_DATA_SLICER_TYPE, "name", NULL, "aggregate_function", COUNT, NULL);
 				go_data_slicer_create_cache(self, sheet, range);
 				cache = go_data_slicer_get_cache(self);
-				//~ go_data_cache_dump(cache, NULL, NULL);
+				go_data_cache_dump(cache, NULL, NULL);
 				rowFields = g_array_new(FALSE, FALSE, sizeof(guint));
-				g_array_append_val(rowFields, row);
+				col = 1;
+				g_array_append_val(rowFields, col);
+				col = 2;
+				g_array_append_val(rowFields, col);
 				colFields = g_array_new(FALSE, FALSE, sizeof(guint));
+				col = 3;
 				g_array_append_val(colFields, col);
+				col = 1;
+				g_array_append_val(colFields, col);				
 				go_data_slicer_set_row_field_index(self, rowFields);
 				go_data_slicer_set_col_field_index(self, colFields);
 				go_data_slicer_set_data_field_index(self, 2);
+
+				/*GODataCache *cache = g_object_new(GO_DATA_CACHE_TYPE, NULL);
+				GnmRange *range = g_new(GnmRange, 1);
+				range = range_init(range, 0, 0, ssconvert_col - 1, ssconvert_row - 1);
+				go_data_cache_build_cache(cache, sheet, range);
+				go_data_cache_dump(cache, NULL, NULL);*/
+
 				go_data_slicer_index_cache(self);
 				go_data_slicer_slice_cache(self);
 				go_data_slicer_dump_slicer(self);

@@ -56,8 +56,8 @@ static void
 go_data_slicer_put_value_at(GODataSlicer *self, int x, int y, GOVal * value) {
     GnmCellPos key;
     /*Check to make sure the coordinates are within range*/
-    g_return_if_fail(x < (int)(self->col_field->tuples->len));
-    g_return_if_fail(y < (int)(self->row_field->tuples->len));
+    g_return_if_fail(x <= (int)(self->col_field->tuples->len));
+    g_return_if_fail(y <= (int)(self->row_field->tuples->len));
      
     /*Use GnmCellPos hash function to hash position*/
     key.col = x;
@@ -86,11 +86,16 @@ go_data_slicer_uint_cmp(guint * a, guint * b) {
  */
 static GOVal *
 go_data_slicer_contribute_to_aggregate_val(GODataSlicer *self, GOVal * original, const GOVal * contribution) {
+     GnmValueType toriginal, tcontribution;
+    
+    toriginal = VALUE_IS_EMPTY (original) ? VALUE_EMPTY : original->type;
+    tcontribution = VALUE_IS_EMPTY (contribution) ? VALUE_EMPTY : contribution->type;
+    
      switch (self->aggregate_function) {
           case SUM:
                /*Note that VALUE_FLOAT encompasses all numeric types*/
-               if (original->type == VALUE_FLOAT && contribution->type == VALUE_FLOAT) {
-                    ((GnmValueFloat*)original)->val += ((GnmValueFloat*)contribution)->val; /*count ignores any data fields*/
+               if (toriginal== VALUE_FLOAT && tcontribution == VALUE_FLOAT) {                   
+                    original->v_float.val += contribution->v_float.val;
                } else {
                     /*FIXME: Not sure what to do if the value isn't numeric*/
                     g_warn_if_reached();
@@ -98,8 +103,8 @@ go_data_slicer_contribute_to_aggregate_val(GODataSlicer *self, GOVal * original,
                break;
           case COUNT:
                /*Note that VALUE_FLOAT encompasses all numeric types*/
-               if (original->type == VALUE_FLOAT && contribution->type == VALUE_FLOAT) {
-                    ((GnmValueFloat*)original)->val += 1.0f; /*count ignores any data fields*/
+               if (toriginal == VALUE_FLOAT) {
+                   original->v_float.val += 1.0f; /*count ignores any data fields*/
                } else {
                     /*FIXME: Not sure what to do if the value isn't numeric*/
                     g_warn_if_reached();
@@ -210,7 +215,7 @@ void go_data_slicer_create_cache(GODataSlicer *self, Sheet * sheet, GnmRange * r
      self->cache = cache;
 
      /*Create overlay*/
-   	 self->cache_overlay = g_object_new(GO_DATA_SLICER_CACHE_OVERLAY_TYPE, "num_records", go_data_cache_num_items(cache), "cache", self->cache, NULL);
+     self->cache_overlay = g_object_new(GO_DATA_SLICER_CACHE_OVERLAY_TYPE, "num_records", go_data_cache_num_items(cache), "cache", self->cache, NULL);
 }
 
 /**
@@ -319,24 +324,24 @@ go_data_slicer_index_cache (GODataSlicer *self) {
      /*Iterate over and process cache records to populate the overlay*/
      for (i=0;i<go_data_cache_num_items(self->cache);i++) {          
           /*set up new overlay record*/
-          GODataSlicerCacheOverlayRecord overlay_record;          
-          overlay_record.filter_tuples = g_array_sized_new(FALSE,TRUE,sizeof(guint),self->page_filters->len);
+          GODataSlicerCacheOverlayRecord * overlay_record = g_malloc(sizeof(GODataSlicerCacheOverlayRecord));          
+          overlay_record->filter_tuples = g_array_sized_new(FALSE,TRUE,sizeof(guint),self->page_filters->len);
           
           /*record column tuple*/
-          overlay_record.col_tuple = self->col_field->index_record(self->col_field, i);
+          overlay_record->col_tuple = self->col_field->index_record(self->col_field, i);
           /*record row tuple*/
-          overlay_record.row_tuple = self->row_field->index_record(self->row_field, i);
+          overlay_record->row_tuple = self->row_field->index_record(self->row_field, i);
           /*record any page field tuples*/
           for (j=0;j<self->page_filters->len;j++) {
                page = (GODataSlicerIndex*)g_ptr_array_index(self->page_filters, i);
                tuple_val = page->index_record(page, i);
-               g_array_append_val(overlay_record.filter_tuples,tuple_val);
+               g_array_append_val(overlay_record->filter_tuples,tuple_val);
           }
 
           /*commit overlay_record to overlay*/
-          self->cache_overlay->append_record(self->cache_overlay, &overlay_record);
+          self->cache_overlay->append_record(self->cache_overlay, overlay_record);
      }
-
+     
      /*complete indexes*/
      self->col_field->complete_index(self->col_field);
      self->row_field->complete_index(self->row_field);
@@ -351,7 +356,6 @@ go_data_slicer_index_cache (GODataSlicer *self) {
      self->max_y = self->row_field->tuples->len;
 
      self->indexed = TRUE;
-     
 }
 
 void
@@ -409,10 +413,10 @@ go_data_slicer_slice_cache (GODataSlicer *self) {
     self->row_field->disable_all_tuples(self->row_field);
      
     /*make a single pass through the cache to compute aggregate values and totals*/
-    for (i=0;i<go_data_cache_num_items(self->cache);i++) {
+    for (i=0;i<go_data_cache_num_items(self->cache);i++) {	
          /*Get overlay record for cache row*/
          record = self->cache_overlay->get_record(self->cache_overlay,i);
-
+	
          /*see if this record is affected by ANY page filters. if so, ignore it*/
          ignoreRecord = FALSE;
          for (j=0;j<self->page_filters->len;j++) {
@@ -426,29 +430,27 @@ go_data_slicer_slice_cache (GODataSlicer *self) {
                    break;
               }
          }
-
+	
          if (!ignoreRecord) {
               /*enable row and column field tuples*/
               self->col_field->tuple_set_enabled(self->col_field, record->col_tuple, TRUE);
-              self->row_field->tuple_set_enabled(self->row_field, record->row_tuple, TRUE);              
+              self->row_field->tuple_set_enabled(self->row_field, record->row_tuple, TRUE);
               /*Compute coordinates*/
-              x = self->col_field->get_tuple_index(self->col_field,record->col_tuple);              
+              x = self->col_field->get_tuple_index(self->col_field,record->col_tuple);
               y = self->row_field->get_tuple_index(self->row_field,record->row_tuple);
+              /*Contribution - zero if there is no data field*/
+              contribution = self->data_field == NULL ? go_val_new_float(0) : go_data_cache_field_get_val (self->data_field, i); 
               /*Let data contribute to row/col value*/
-              old_data = go_data_slicer_get_value_at(self,x,y);
-              contribution = go_data_cache_field_get_val (self->data_field, i);
-              go_data_slicer_put_value_at(self, x, y, go_data_slicer_contribute_to_aggregate_val(self, old_data, contribution));
+              old_data = go_data_slicer_get_value_at(self,x,y);		 		 		 		 		 
+              go_data_slicer_put_value_at(self, x, y, go_data_slicer_contribute_to_aggregate_val(self, old_data, contribution));		 		 
               /*Let data contribute to row subtotal*/
               old_data = go_data_slicer_get_value_at(self,self->max_x,y);
-              contribution = go_data_cache_field_get_val (self->data_field, i);              
-              go_data_slicer_put_value_at(self, self->max_x, y,  go_data_slicer_contribute_to_aggregate_val(self, old_data, contribution));
+              go_data_slicer_put_value_at(self, self->max_x, y,  go_data_slicer_contribute_to_aggregate_val(self, old_data, contribution));      	      
               /*Let data contribute to col subtotal*/
               old_data = go_data_slicer_get_value_at(self,x,self->max_y);
-              contribution = go_data_cache_field_get_val (self->data_field, i);              
               go_data_slicer_put_value_at(self, x, self->max_y,  go_data_slicer_contribute_to_aggregate_val(self, old_data, contribution)); 
               /*Let data contribute to overall total*/
               old_data = go_data_slicer_get_value_at(self,self->max_x,self->max_y);
-              contribution = go_data_cache_field_get_val (self->data_field, i);              
               go_data_slicer_put_value_at(self, self->max_x, self->max_y,  go_data_slicer_contribute_to_aggregate_val(self, old_data, contribution));
          }
     }
@@ -479,17 +481,22 @@ go_data_slicer_get_page_filter_tuples(GODataSlicer *self, guint page_filter_num)
 GOVal *
 go_data_slicer_get_value_at(GODataSlicer *self, int x, int y) {
     GnmCellPos key;
+    GOVal * result;    
     g_return_val_if_fail (IS_GO_DATA_SLICER (self), NULL);
     /*Check to make sure the coordinates are within range*/
-    g_return_val_if_fail(x < (int)(self->col_field->tuples->len), NULL);
-    g_return_val_if_fail(y < (int)(self->row_field->tuples->len), NULL);
+    g_return_val_if_fail(x <= (int)(self->col_field->tuples->len), NULL);
+    g_return_val_if_fail(y <= (int)(self->row_field->tuples->len), NULL);
 
     /*Use GnmCellPos hash function to hash position*/
     key.col = x;
     key.row = y;    
 
     /*Perform lookup*/
-    return (GOVal *) g_hash_table_lookup(self->view, &key);
+    result = g_hash_table_lookup(self->view, &key);
+    if (result == NULL) {
+        result = go_val_new_float(0);
+    }
+    return result;
 }
 
 /*Prints something akin to an OpenOffice Data Pilot table*/
@@ -518,8 +525,9 @@ go_data_slicer_dump_slicer(GODataSlicer *self) {
                     col_tuple_in_order_num = ((GODataSlicerIndexedTuple *)(g_ptr_array_index(col_tuples,j)))->relative_position;                    
                }
                value = go_data_slicer_get_value_at(self, col_tuple_in_order_num, row_tuple_in_order_num);
-               g_printf("%f ", ((GnmValueFloat*)value)->val);
+               g_printf("%10f ", value->v_float.val );
           }
+          g_printf("\n");
      }
 }
 

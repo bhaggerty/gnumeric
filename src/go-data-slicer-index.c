@@ -24,6 +24,7 @@
 #include <glib/gi18n-lib.h>
 #include "go-data-slicer-index.h"
 #include "go-data-slicer-tuple.h"
+#include <glib/gprintf.h>
 
 enum
 {
@@ -38,16 +39,17 @@ static GODataSlicerIndexedTuple *
 go_data_slicer_index_get_indexed_tuple_by_tuple_record_num(const GODataSlicerIndex *self, unsigned int tuple_record_num) {         
           
     guint lower = 0;
-    guint upper = MIN(tuple_record_num, self->tuples->len-1);
-    guint pivot = self->tuples->len/2;
+    guint upper = MIN(tuple_record_num, self->tuples->len-1);   
+    guint pivot = upper/2;
     GODataSlicerIndexedTuple * pivot_tuple;
 
     g_return_val_if_fail(self->completed==TRUE,NULL);
      
     /*We know that the tuples array is sorted by record_num in ascending order
-      so we can binary search for the desired tuple to set its flag*/
-    pivot_tuple = g_ptr_array_index(self->tuples,pivot);    
+      so we can binary search for the desired tuple to set its flag*/    
+    pivot_tuple = g_ptr_array_index(self->tuples,pivot);
     while (pivot_tuple->tuple->record_num != tuple_record_num) {
+	/*g_printf("L:%u,P:%u,U:%u,D:%u,C:%u\n", lower, pivot, upper,tuple_record_num,pivot_tuple->tuple->record_num);*/
         if (tuple_record_num < pivot_tuple->tuple->record_num) {
              upper = pivot-1;
              pivot = (upper+lower)/2;
@@ -62,7 +64,7 @@ go_data_slicer_index_get_indexed_tuple_by_tuple_record_num(const GODataSlicerInd
              break;
         }
     }
-    return pivot_tuple;
+    return (GODataSlicerIndexedTuple*) pivot_tuple;
 }
 
 
@@ -100,6 +102,7 @@ go_data_slicer_index_dispose (GObject *object)
     for (i=0;i<self->tuples->len;i++) {
          indexed_tuple = (GODataSlicerIndexedTuple *) g_ptr_array_index(self->tuples,i);
          g_object_unref(indexed_tuple->tuple);
+	 g_free(indexed_tuple);
     }
 
     /*unref stuff from slicer*/
@@ -201,7 +204,7 @@ go_data_slicer_index_class_init (GODataSlicerIndexClass *klass)
 
 unsigned int
 go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_num) {
-     GODataSlicerIndexedTuple new_indexed_tuple;
+     GODataSlicerIndexedTuple * new_indexed_tuple;
      GODataSlicerIndexedTuple * existing_tuple;
      GODataSlicerTuple * new_tuple;
 
@@ -218,11 +221,12 @@ go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_
           return existing_tuple->tuple->record_num;
      } else {
           /*if it isn't found, create it and perform insertions*/
-          new_indexed_tuple.enabled = TRUE;  /*enable tuples by default*/
-          new_indexed_tuple.relative_position = 0;
-          new_indexed_tuple.tuple = new_tuple;
-          g_ptr_array_add(self->tuples, &new_indexed_tuple);
-          g_tree_insert(self->tuples_tree, new_tuple, &new_indexed_tuple);
+	  new_indexed_tuple = g_malloc(sizeof(GODataSlicerIndexedTuple));
+          new_indexed_tuple->enabled = TRUE;  /*enable tuples by default*/
+          new_indexed_tuple->relative_position = 0;
+          new_indexed_tuple->tuple = new_tuple;
+          g_ptr_array_add(self->tuples, new_indexed_tuple);
+          g_tree_insert(self->tuples_tree, new_tuple, new_indexed_tuple);
           return new_tuple->record_num;
      }
 }
@@ -256,20 +260,22 @@ go_data_slicer_index_complete_index (GODataSlicerIndex *self) {
 
 void
 go_data_slicer_index_tuple_set_enabled (GODataSlicerIndex *self, unsigned int tuple_record_num, gboolean is_enabled) {
-    GODataSlicerIndexedTuple * tuple = go_data_slicer_index_get_indexed_tuple_by_tuple_record_num(self,tuple_record_num);
-
-    if (tuple) {
-         tuple->enabled = is_enabled;
-    }
+	GODataSlicerIndexedTuple tuple;
+	void * result = go_data_slicer_index_get_indexed_tuple_by_tuple_record_num(self,tuple_record_num);
+	if (result != NULL) {
+		tuple = *((GODataSlicerIndexedTuple *)result);
+		tuple.enabled = is_enabled;
+	}
 }
 
 void
 go_data_slicer_index_disable_all_tuples (GODataSlicerIndex *self) {
     guint i;
-    GODataSlicerIndexedTuple * indexed_tuple;
+    GODataSlicerIndexedTuple indexed_tuple;
+    
     for (i=0;i<self->tuples->len;i++) {
-         indexed_tuple = (GODataSlicerIndexedTuple *) g_ptr_array_index(self->tuples, i);
-         indexed_tuple->enabled = FALSE;
+         indexed_tuple = *((GODataSlicerIndexedTuple *)g_ptr_array_index(self->tuples, i));
+         indexed_tuple.enabled = FALSE;
     }
 }
 
@@ -278,7 +284,7 @@ go_data_slicer_index_get_tuple_index (const GODataSlicerIndex *self, unsigned in
     GODataSlicerIndexedTuple * tuple;     
     g_warn_if_fail(self->completed == TRUE);
 
-    tuple = go_data_slicer_index_get_indexed_tuple_by_tuple_record_num(self, tuple_record_num);
+    tuple = (GODataSlicerIndexedTuple *) go_data_slicer_index_get_indexed_tuple_by_tuple_record_num(self, tuple_record_num);
     return tuple->relative_position;
 }
 

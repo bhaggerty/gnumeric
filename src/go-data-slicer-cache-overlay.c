@@ -43,15 +43,19 @@ go_data_slicer_cache_overlay_init (GODataSlicerCacheOverlay *self)
 static void 
 go_data_slicer_cache_overlay_dispose(GObject *object) {
 
+	guint i;
 	GODataSlicerCacheOverlay *self;
 	g_return_if_fail (IS_GO_DATA_SLICER_CACHE_OVERLAY (object));		
 	self = GO_DATA_SLICER_CACHE_OVERLAY(object); /*Cast object into our type*/
 	
 	/*unref stuff from cache*/
-    g_object_unref(self->cache);
+	g_object_unref(self->cache);
 
 	/*destroy records and array*/
-	g_array_free(self->records, TRUE);
+	for (i=0;i<self->records->len;i++) {
+		g_free(g_ptr_array_index(self->records, i));
+	}
+	g_ptr_array_free(self->records, TRUE);
 	self->records = NULL;
 
 	G_OBJECT_CLASS (go_data_slicer_cache_overlay_parent_class)->dispose (object);
@@ -75,9 +79,9 @@ go_data_slicer_cache_overlay_set_property (GObject *object, guint prop_id, const
 	{
 	case PROP_NUMRECORDS:
 		if (!self->records) {
-			self->records = g_array_sized_new(FALSE,FALSE,sizeof(GODataSlicerCacheOverlayRecord),g_value_get_uint(value));
+			self->records = g_ptr_array_sized_new(g_value_get_uint(value));
 		} else {
-			g_array_set_size(self->records,g_value_get_uint(value));
+			g_ptr_array_set_size(self->records,g_value_get_uint(value));
 		}
 		break;
 	case PROP_CACHE:
@@ -85,7 +89,7 @@ go_data_slicer_cache_overlay_set_property (GObject *object, guint prop_id, const
             g_object_unref(self->cache); /*decrease reference count of old cache*/
         }
 		self->cache = g_value_get_object (value);
-        g_object_ref(self->cache); /*increase reference count of new cache*/
+		g_object_ref(self->cache); /*increase reference count of new cache*/
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -143,11 +147,11 @@ go_data_slicer_cache_overlay_class_init (GODataSlicerCacheOverlayClass *klass)
 const GODataSlicerCacheOverlayRecord *
 go_data_slicer_cache_overlay_get_record (const GODataSlicerCacheOverlay *self, const guint record_num) {
 	g_return_val_if_fail(record_num < self->records->len, NULL);
-	return &g_array_index(self->records, GODataSlicerCacheOverlayRecord, record_num);
+	return (GODataSlicerCacheOverlayRecord*)g_ptr_array_index(self->records, record_num);
 }
 
 void
 go_data_slicer_cache_overlay_append_record (GODataSlicerCacheOverlay *self, GODataSlicerCacheOverlayRecord * record) {
 	g_warn_if_fail(self->records->len < go_data_cache_num_items (self->cache));
-	g_array_append_val(self->records, record);
+	g_ptr_array_add(self->records, record);
 }

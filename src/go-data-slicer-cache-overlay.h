@@ -67,7 +67,7 @@ struct _GODataSlicerCacheOverlay
 	GObject parent_instance;
 
 	GODataCache * cache; /*The cache to be overlayed by this CacheOverlay*/
-	GArray * records; /*An array of GODataSlicerCacheOverlayRecords - one for each record in the Cache*/
+	GPtrArray * records; /*An array of GODataSlicerCacheOverlayRecords - one for each record in the Cache*/
 
 	const GODataSlicerCacheOverlayRecord *  (*get_record) (const GODataSlicerCacheOverlay *self, const guint record_num);
 	void (*append_record) (GODataSlicerCacheOverlay *self, GODataSlicerCacheOverlayRecord * record);
