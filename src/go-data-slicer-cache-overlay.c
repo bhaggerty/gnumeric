@@ -118,9 +118,9 @@ go_data_slicer_cache_overlay_class_init (GODataSlicerCacheOverlayClass *klass)
 	                                 g_param_spec_uint    ("num_records",
 	                                                      NULL,
 	                                                      "The number of records this CacheOverlay will store",
-	                                                      -1,
+	                                                      0,
 	                                                      UINT_MAX,
-	                                                      -1,
+	                                                      0,
 	                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 }
 

@@ -155,9 +155,9 @@ go_data_slicer_tuple_class_init (GODataSlicerTupleClass *klass)
 	                                 g_param_spec_uint    ("record_num",
 	                                                      NULL,
 	                                                      "The record in the cache this tuple draws values from.",
-	                                                      -1,
+	                                                      0,
 	                                                      UINT_MAX,
-	                                                      -1,
+	                                                      0,
 	                                                      G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
 }
 
