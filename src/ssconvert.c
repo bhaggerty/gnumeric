@@ -653,7 +653,7 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 				self = g_object_new(GO_DATA_SLICER_TYPE, "name", NULL, "aggregate_function", COUNT, NULL);
 				go_data_slicer_create_cache(self, sheet, range);
 				cache = go_data_slicer_get_cache(self);
-				go_data_cache_dump(cache, NULL, NULL);
+				//~ go_data_cache_dump(cache, NULL, NULL);
 				rowFields = g_array_new(FALSE, FALSE, sizeof(guint));
 				g_array_append_val(rowFields, row);
 				colFields = g_array_new(FALSE, FALSE, sizeof(guint));
