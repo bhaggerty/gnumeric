@@ -163,7 +163,7 @@ go_data_slicer_tuple_class_init (GODataSlicerTupleClass *klass)
 
 gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other) {
 	guint i, comparison;
-	int parent;
+	/*int parent;*/
 	const GOVal * selfVal;
 	const GOVal * otherVal;	
 	g_warn_if_fail(self->tuple_template == other->tuple_template);	
@@ -174,10 +174,14 @@ gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODa
 	for (i=0;i<self->tuple_template->len;i++) {
 		GODataCacheField * column = g_ptr_array_index(self->tuple_template, i);
 		/*Find base field if this is a grouped field*/
+
+		/* Something is wrong with this...
 		while (!go_data_cache_field_is_base(column)) {
 			g_object_get(column, "group-base", &parent, NULL);
 			column = go_data_cache_get_field(self->cache, parent);
 		}
+		*/
+		
 		/*Retrieve and compare values*/
 		selfVal = go_data_cache_field_get_val(column,self->record_num);
 		otherVal = go_data_cache_field_get_val(column, other->record_num);

@@ -148,6 +148,6 @@ go_data_slicer_cache_overlay_get_record (const GODataSlicerCacheOverlay *self, c
 
 void
 go_data_slicer_cache_overlay_append_record (GODataSlicerCacheOverlay *self, GODataSlicerCacheOverlayRecord * record) {
-	g_warn_if_fail(self->records->len == go_data_cache_num_items (self->cache));
+	g_warn_if_fail(self->records->len < go_data_cache_num_items (self->cache));
 	g_array_append_val(self->records, record);
 }
