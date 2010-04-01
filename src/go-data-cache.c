@@ -462,14 +462,6 @@ formatted_value_equal (GnmValue const *a, GnmValue const *b)
 
 
 typedef struct {
-	gboolean has_blank;
-	GHashTable *hash;
-	GODateConventions const *date_conv;
-	Sheet *src_sheet;
-} UniqueCollection;
-
-
-typedef struct {
 	GODataCache const *cache;
 	GArray const *field_order;
 } GODataCacheCompare;
