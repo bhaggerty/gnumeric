@@ -36,12 +36,18 @@
 #include <sys/resource.h>
 #endif
 
+#include "go-data-cache.h"
+#include "gnm-data-cache-source.h"
+#include "ranges.h"
+
 static gboolean ssconvert_show_version = FALSE;
 static gboolean ssconvert_list_exporters = FALSE;
 static gboolean ssconvert_list_importers = FALSE;
 static gboolean ssconvert_one_file_per_sheet = FALSE;
 static gboolean ssconvert_recalc = FALSE;
 static gboolean ssconvert_solve = FALSE;
+static gboolean ssconvert_gencache = FALSE;
+static gboolean ssconvert_dumpcache = FALSE;
 static char *ssconvert_range = NULL;
 static char *ssconvert_import_encoding = NULL;
 static char *ssconvert_import_id = NULL;
@@ -133,6 +139,20 @@ static const GOptionEntry ssconvert_options [] = {
 		"export-range", 0,
 		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_STRING, &ssconvert_range,
 		N_("The range to export"),
+		NULL
+	},
+	
+	{
+		"gen-cache", 0,
+		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &ssconvert_gencache,
+		N_("Generate cache here"),
+		NULL
+	},
+	
+	{
+		"dump-cache", 0,
+		G_OPTION_FLAG_HIDDEN, G_OPTION_ARG_NONE, &ssconvert_dumpcache,
+		N_("Dump cache to file"),
 		NULL
 	},
 
@@ -592,6 +612,16 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 				workbook_recalc_all (wb);
 			else
 				workbook_recalc (wb);
+			
+			if (ssconvert_gencache) {
+				GODataCache *cache = g_object_new(GO_DATA_CACHE_TYPE, NULL);
+				GnmRange *range = g_new(GnmRange, 1);
+				range = range_init(range, 0, 0, 4, 20);
+				g_print("got here first?\n");
+				go_data_cache_build_cache(cache, sheet, range);
+				g_print("got here\n");
+				go_data_cache_dump(cache, NULL, NULL);
+			}
 
 			if (ssconvert_range)
 				setup_range (G_OBJECT (wb),

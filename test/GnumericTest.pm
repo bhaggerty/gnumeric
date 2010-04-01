@@ -6,7 +6,7 @@ use Config;
 use XML::Parser;
 
 @GnumericTest::ISA = qw (Exporter);
-@GnumericTest::EXPORT = qw(test_sheet_calc test_importer test_valgrind
+@GnumericTest::EXPORT = qw(test_cache_slicer test_sheet_calc test_importer test_valgrind
 			   test_ssindex sstest sstestslicer test_command message
 			   $ssconvert $sstest $topsrc $top_builddir
 			   $samples $PERL);
@@ -255,6 +255,45 @@ sub test_sheet_calc {
     my $code = system ("$ssconvert " .
 		       join (" ", @$pargs) .
 		       " --recalc --export-range='$range' '$file' '$tmp' 2>&1 | sed -e 's/^/| /'");
+    &system_failure ($ssconvert, $code) if $code;
+
+    my $actual = &read_file ($tmp);
+
+    my $ok;
+    if (ref $expected) {
+	local $_ = $actual;
+	$ok = &$expected ($_);
+    } else {
+	$ok = ($actual eq $expected);
+    }
+
+    &removejunk ($tmp);
+
+    if ($ok) {
+	print STDERR "Pass\n";
+    } else {
+	$actual =~ s/\s+$//;
+	&dump_indented ($actual);
+	die "Fail.\n\n";
+    }
+}
+
+# -----------------------------------------------------------------------------
+
+sub test_cache_slicer {
+    my $file = shift @_;
+    my $pargs = (ref $_[0]) ? shift @_ : [];
+    my ($range,$expected) = @_;
+
+    &report_skip ("file $file does not exist") unless -r $file;
+
+    my $tmp = fileparse ($file);
+    $tmp =~ s/\.[a-zA-Z0-9]+$/.csv/;
+    &junkfile ($tmp);
+
+    my $code = system ("$ssconvert " .
+		       join (" ", @$pargs) .
+		       " --recalc --gen-cache '$file' '$tmp' 2>&1 | sed -e 's/^/| /'");
     &system_failure ($ssconvert, $code) if $code;
 
     my $actual = &read_file ($tmp);
