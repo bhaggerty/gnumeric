@@ -18,12 +18,14 @@
  */
 
 #include "go-data-slicer-cache-overlay.h"
+#include <gsf/gsf-impl-utils.h>
 
 enum
 {
 	PROP_0,
 
-	PROP_NUMRECORDS
+	PROP_NUMRECORDS,
+	PROP_CACHE
 };
 
 G_DEFINE_TYPE (GODataSlicerCacheOverlay, go_data_slicer_cache_overlay, G_TYPE_OBJECT);
@@ -78,6 +80,13 @@ go_data_slicer_cache_overlay_set_property (GObject *object, guint prop_id, const
 			g_array_set_size(self->records,g_value_get_uint(value));
 		}
 		break;
+	case PROP_CACHE:
+        if (self->cache) {
+            g_object_unref(self->cache); /*decrease reference count of old cache*/
+        }
+		self->cache = g_value_get_object (value);
+        g_object_ref(self->cache); /*increase reference count of new cache*/
+		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -96,6 +105,9 @@ go_data_slicer_cache_overlay_get_property (GObject *object, guint prop_id, GValu
 	case PROP_NUMRECORDS:
 		g_value_set_uint(value, self->records->len);
 		break;
+	case PROP_CACHE:
+		g_value_set_object (value, self->cache);
+		break;	
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -113,6 +125,10 @@ go_data_slicer_cache_overlay_class_init (GODataSlicerCacheOverlayClass *klass)
 	object_class->set_property = go_data_slicer_cache_overlay_set_property;
 	object_class->get_property = go_data_slicer_cache_overlay_get_property;
 
+	g_object_class_install_property (object_class, PROP_CACHE,
+		 g_param_spec_object ("cache", NULL, NULL,
+			GO_DATA_CACHE_TYPE, GSF_PARAM_STATIC | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+	
 	g_object_class_install_property (object_class,
 	                                 PROP_NUMRECORDS,
 	                                 g_param_spec_uint    ("num_records",
