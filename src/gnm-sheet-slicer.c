@@ -36,7 +36,7 @@ struct _GnmSheetSlicer {
 	GODataSlicer		base;
 
 	Sheet		*sheet;
-	GnmRange	 range;
+	GnmRange	 range;	
 
 	/* Offsets from the top-left (in LTR) pos range */
 	unsigned int	 first_header_row, first_data_row, first_data_col;
@@ -309,6 +309,7 @@ gnm_sheet_slicer_field_header_at_pos (GnmSheetSlicer const *gss,
 GnmSheetSlicer *
 gnm_sheet_slicers_at_pos (Sheet const *sheet, GnmCellPos const *pos)
 {
+#if 0	
 	GSList *ptr;
 	GnmRange r;
 
@@ -319,7 +320,7 @@ gnm_sheet_slicers_at_pos (Sheet const *sheet, GnmCellPos const *pos)
 	for (ptr = sheet->slicers; ptr != NULL ; ptr = ptr->next)
 		if (gnm_sheet_slicer_overlaps_range (ptr->data, &r))
 			return ptr->data;
-
+#endif
 	return NULL;
 }
 

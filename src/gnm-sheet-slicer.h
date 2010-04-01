@@ -52,6 +52,7 @@ GODataSlicerField *gnm_sheet_slicer_field_header_at_pos (GnmSheetSlicer const *g
 
 void		   gnm_sheet_slicer_regenerate	 (GnmSheetSlicer *gss);
 
+
 /* Convenience */
 gboolean	 gnm_sheet_slicer_overlaps_range (GnmSheetSlicer const *gss, GnmRange const *r);
 

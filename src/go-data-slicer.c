@@ -23,12 +23,14 @@
 #include <gnumeric-config.h>
 #include "go-data-slicer-impl.h"
 #include "go-data-cache.h"
+#include "gnm-data-cache-source.h"
 #include "go-data-slicer-index.h"
 #include "go-data-slicer-cache-overlay.h"
 #include "go-data-slicer-tuple.h"
 #include "go-val.h"
 #include "value.h"
 #include "numbers.h"
+#include "position.h"
 
 #include <gsf/gsf-impl-utils.h>
 #include <glib/gi18n-lib.h>
@@ -50,13 +52,15 @@ enum {
  * Put a value at a particular set of coordinates in the view
  */
 static void
-go_data_slicer_put_value_at(GODataSlicer *self, guint x, guint y, GOVal * value) {
-    guint key;
+go_data_slicer_put_value_at(GODataSlicer *self, int x, int y, GOVal * value) {
+    GnmCellPos key;
     /*Check to make sure the coordinates are within range*/
-    g_return_if_fail(x<self->col_field->tuples->len);
-    g_return_if_fail(y<self->row_field->tuples->len);
-    /*Use the row-major order position of the coordinate as its key*/
-    key = ((self->col_field->tuples->len-1) * y) + x;
+    g_return_if_fail(x < (int)(self->col_field->tuples->len));
+    g_return_if_fail(y < (int)(self->row_field->tuples->len));
+     
+    /*Use GnmCellPos hash function to hash position*/
+    key.col = x;
+    key.row = y;
     /*Perform insertion*/
     g_hash_table_insert(self->view, &key, value);
 }
@@ -118,7 +122,7 @@ go_data_slicer_init (GODataSlicer *self)
 	self->row_field = NULL;
     self->data_field = NULL;
 	self->page_filters = g_ptr_array_new ();
-	self->view = g_hash_table_new(g_int_hash, g_int_equal);
+	self->view = g_hash_table_new((GHashFunc)gnm_cellpos_hash, (GEqualFunc)gnm_cellpos_equal);
 }
 
 
@@ -182,7 +186,7 @@ go_data_slicer_class_init (GODataSlicerClass *klass)
 
 	g_object_class_install_property (gobject_class, PROP_CACHE,
 		 g_param_spec_object ("cache", NULL, NULL,
-			GO_DATA_CACHE_TYPE, GSF_PARAM_STATIC | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+			GO_DATA_CACHE_TYPE, GSF_PARAM_STATIC | G_PARAM_READWRITE));
 	g_object_class_install_property (gobject_class, PROP_NAME,
 		 g_param_spec_boxed ("name", NULL, NULL, go_string_get_type (),
 			GSF_PARAM_STATIC | G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
@@ -197,6 +201,13 @@ go_data_slicer_class_init (GODataSlicerClass *klass)
 GSF_CLASS (GODataSlicer, go_data_slicer,
 	   go_data_slicer_class_init, go_data_slicer_init,
 	   G_TYPE_OBJECT)
+
+
+void go_data_slicer_create_cache(GODataSlicer *self, Sheet * sheet, GnmRange * range) {
+     GODataCache * cache = g_object_new(GO_DATA_CACHE_TYPE, NULL);
+     go_data_cache_build_cache(cache, sheet, range);
+     self->cache = cache;
+}
 
 /**
  * go_data_slicer_get_cache :
@@ -462,14 +473,16 @@ go_data_slicer_get_page_filter_tuples(GODataSlicer *self, guint page_filter_num)
 }
 
 GOVal *
-go_data_slicer_get_value_at(GODataSlicer *self, guint x, guint y) {
-    guint key;
+go_data_slicer_get_value_at(GODataSlicer *self, int x, int y) {
+    GnmCellPos key;
     g_return_val_if_fail (IS_GO_DATA_SLICER (self), NULL);
     /*Check to make sure the coordinates are within range*/
-    g_return_val_if_fail(x<self->col_field->tuples->len, NULL);
-    g_return_val_if_fail(y<self->row_field->tuples->len, NULL);
-    /*Use the row-major order position of the coordinate as its key*/
-    key = ((self->col_field->tuples->len-1) * y) + x;
+    g_return_val_if_fail(x < (int)(self->col_field->tuples->len), NULL);
+    g_return_val_if_fail(y < (int)(self->row_field->tuples->len), NULL);
+
+    /*Use GnmCellPos hash function to hash position*/
+    key.col = x;
+    key.row = y;    
 
     /*Perform lookup*/
     return (GOVal *) g_hash_table_lookup(self->view, &key);

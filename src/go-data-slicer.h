@@ -34,6 +34,7 @@
 #ifndef GO_DATA_SLICER_H
 #define GO_DATA_SLICER_H
 
+#include <gnumeric.h>
 #include "goffice-data.h"	/* remove after move to goffice */
 #include <glib-object.h>
 #include <go-val.h>
@@ -51,6 +52,14 @@ G_BEGIN_DECLS
 #define IS_GO_DATA_SLICER(o)	(G_TYPE_CHECK_INSTANCE_TYPE ((o), GO_DATA_SLICER_TYPE))
 
 GType go_data_slicer_get_type (void);
+
+/**
+ * create_cache:
+ * @self:       This GODataSlicer
+ * @sheet:      The sheet which will serve as the source for a new cache
+ * @range:      The range of cells from the sheet to use to construct a new cache
+ */
+void go_data_slicer_create_cache(GODataSlicer *self, Sheet * sheet, GnmRange * range);
 
 GODataCache *go_data_slicer_get_cache (GODataSlicer const *self);
 void	     go_data_slicer_set_cache (GODataSlicer *self, GODataCache *cache);
@@ -197,7 +206,7 @@ go_data_slicer_get_page_filter_tuples(GODataSlicer *self, guint page_filter_num)
  * Returns:     A pointer to a GOVal
  */
 GOVal *
-go_data_slicer_get_value_at(GODataSlicer *self, guint x, guint y);
+go_data_slicer_get_value_at(GODataSlicer *self, int x, int y);
 
 G_END_DECLS
 
