@@ -75,7 +75,7 @@ struct _GODataSlicerIndex {
     void (*tuple_set_enabled) (GODataSlicerIndex *self, unsigned int tuple_record_num, gboolean is_enabled);
     void (*disable_all_tuples) (GODataSlicerIndex *self);
     guint (*get_tuple_index) (const GODataSlicerIndex *self, unsigned int tuple_record_num);
-    GPtrArray * (*get_all_tuples) (const GODataSlicerIndex *self);
+    GPtrArray * (*get_all_tuples) (const GODataSlicerIndex *self, gboolean only_enabled);
 };
 
 GType go_data_slicer_index_get_type (void);
@@ -156,9 +156,9 @@ go_data_slicer_index_disable_all_tuples (GODataSlicerIndex *self);
  * get_all_tuples:
  *
  * @tuple_record_num:   the record_num value of the tuple which should be searched for
- *
- * Return all IndexedTuples in this SlicerIndex, sorted by tuple values, except for
- * those ones which are disabled by Page Filters.
+ * @only_enabled        Whether or not to return only enabled tuples
+ * Return all IndexedTuples in this SlicerIndex, sorted by tuple values.
+ * Will not return those which are disabled by Page Filters if only_enabled == TRUE
  *
  * IF YOU ARE USING THIS FUNCTION: Be sure to decrease the ref count of each tuple
  * when you are finished with them.
@@ -166,7 +166,7 @@ go_data_slicer_index_disable_all_tuples (GODataSlicerIndex *self);
  * Returns: a GPtrArray of tuples, sorted by value
  */
 GPtrArray *
-go_data_slicer_index_get_all_tuples (const GODataSlicerIndex *self);
+go_data_slicer_index_get_all_tuples (const GODataSlicerIndex *self, gboolean only_enabled);
 
 G_END_DECLS
 

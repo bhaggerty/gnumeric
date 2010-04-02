@@ -655,18 +655,17 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 				cache = go_data_slicer_get_cache(self);
 				go_data_cache_dump(cache, NULL, NULL);
 				rowFields = g_array_new(FALSE, FALSE, sizeof(guint));
-				col = 1;
+				col = 0;
 				g_array_append_val(rowFields, col);
-				col = 2;
+				col = 1;
 				g_array_append_val(rowFields, col);
 				colFields = g_array_new(FALSE, FALSE, sizeof(guint));
-				col = 3;
+				col = 2;
 				g_array_append_val(colFields, col);
-				col = 1;
+				col = 0;
 				g_array_append_val(colFields, col);				
 				go_data_slicer_set_row_field_index(self, rowFields);
 				go_data_slicer_set_col_field_index(self, colFields);
-				go_data_slicer_set_data_field_index(self, 2);
 
 				/*GODataCache *cache = g_object_new(GO_DATA_CACHE_TYPE, NULL);
 				GnmRange *range = g_new(GnmRange, 1);
@@ -677,6 +676,7 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 				go_data_slicer_index_cache(self);
 				go_data_slicer_slice_cache(self);
 				go_data_slicer_dump_slicer(self);
+				g_object_unref(self);
 			}
 
 			if (ssconvert_range)

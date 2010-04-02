@@ -30,6 +30,7 @@
 #include <gsf/gsf-impl-utils.h>
 #include <glib/gi18n-lib.h>
 #include <string.h>
+#include <glib/gprintf.h>
 
 enum
 {
@@ -199,4 +200,24 @@ gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODa
 		if (comparison != 0) return comparison;
 	}
 	return comparison;
+}
+
+void go_data_slicer_tuple_dump_tuple(GODataSlicerTuple * tuple) {
+	guint i;
+	const GOVal * value;
+	GnmValueType tvalue;
+/*Assume all values are numeric for now*/
+	g_printf("[");
+	for (i=0;i<tuple->tuple_template->len;i++) {
+		GODataCacheField * column = g_ptr_array_index(tuple->tuple_template, i);
+		value = go_data_cache_field_get_val(column,tuple->record_num);
+
+		tvalue = VALUE_IS_EMPTY (value) ? VALUE_EMPTY : value->type;
+		if (tvalue == VALUE_FLOAT) {		
+			g_printf("%-2.1f ", value->v_float.val);
+		} else {
+			g_printf("- ");
+		}
+	}
+	g_printf("]");
 }

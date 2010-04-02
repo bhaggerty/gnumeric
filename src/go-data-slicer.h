@@ -197,6 +197,7 @@ go_data_slicer_get_page_filter_tuples(GODataSlicer *self, guint page_filter_num)
  * @self:           This GODataSlicer
  * @x:              x-coordinate for the value/total desired
  * @y:              y-coordinate for the value/total desired
+ * @create:         Whether or not an empty value should be created and returned (returns NULL otherwise)
  *
  * After having sliced the cache, self->view represents a sparse matrix of
  * values indexed by location in the resultant Slicer representation.  This
@@ -206,7 +207,7 @@ go_data_slicer_get_page_filter_tuples(GODataSlicer *self, guint page_filter_num)
  * Returns:     A pointer to a GOVal
  */
 GOVal *
-go_data_slicer_get_value_at(GODataSlicer *self, int x, int y);
+go_data_slicer_get_value_at(GODataSlicer *self, int x, int y, gboolean create);
 
 /**
  * dump_slicer

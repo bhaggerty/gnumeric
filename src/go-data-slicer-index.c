@@ -231,11 +231,12 @@ go_data_slicer_index_index_record (GODataSlicerIndex *self, unsigned int record_
      }
 }
 
-static void
+static gboolean
 tuples_tree_traversal_function (gconstpointer key, gconstpointer value, gpointer user_data) {
      GPtrArray * accumulator = (GPtrArray *) user_data;
      GODataSlicerIndexedTuple * indexed_tuple = (GODataSlicerIndexedTuple *) value;
      g_ptr_array_add(accumulator, indexed_tuple);
+     return FALSE;
 }
 
 void
@@ -248,7 +249,7 @@ go_data_slicer_index_complete_index (GODataSlicerIndex *self) {
      
     accumulator = g_ptr_array_sized_new(g_tree_nnodes(self->tuples_tree));
     g_tree_foreach(self->tuples_tree, (GTraverseFunc) tuples_tree_traversal_function, accumulator);
-
+     
     for(i=0;i<accumulator->len;i++) {
          tuple = (GODataSlicerIndexedTuple *) g_ptr_array_index(accumulator,i);
          tuple->relative_position = i;
@@ -289,23 +290,26 @@ go_data_slicer_index_get_tuple_index (const GODataSlicerIndex *self, unsigned in
 }
 
 GPtrArray *
-go_data_slicer_index_get_all_tuples (const GODataSlicerIndex *self) {     
+go_data_slicer_index_get_all_tuples (const GODataSlicerIndex *self, gboolean only_enabled) {     
     guint i;
     GODataSlicerIndexedTuple * indexed_tuple;
     GPtrArray * accumulator = g_ptr_array_sized_new(g_tree_nnodes(self->tuples_tree));
     GPtrArray * result = g_ptr_array_new();
      
     g_return_val_if_fail(self->completed == TRUE, NULL);
-
+     
     g_tree_foreach(self->tuples_tree, (GTraverseFunc) tuples_tree_traversal_function, accumulator);
-
+     
     for(i=0;i<accumulator->len;i++) {
         indexed_tuple = (GODataSlicerIndexedTuple *) g_ptr_array_index(accumulator,i);
-        if (indexed_tuple->enabled) {
+        if (indexed_tuple->enabled || !only_enabled) {
              g_ptr_array_add(result, indexed_tuple);
              /*Increase reference count to that tuple since someone else will be using it*/
              g_object_ref(indexed_tuple->tuple);
         }
     }
+
+    g_ptr_array_free(accumulator, TRUE);
+     
     return result;
 }

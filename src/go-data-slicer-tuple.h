@@ -77,6 +77,8 @@ GType go_data_slicer_tuple_get_type (void) G_GNUC_CONST;
  */
 gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other);
 
+void go_data_slicer_tuple_dump_tuple(GODataSlicerTuple * tuple);
+
 G_END_DECLS
 
 #endif /* _GO_DATA_SLICER_TUPLE_H_ */
