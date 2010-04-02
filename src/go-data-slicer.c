@@ -557,6 +557,7 @@ go_data_slicer_dump_slicer(GODataSlicer *self) {
      /*Get all tuples*/
      row_tuples = self->row_field->get_all_tuples(self->row_field, FALSE);
      col_tuples = self->col_field->get_all_tuples(self->col_field, FALSE);
+
      g_printf("Row tuples: %u\n", row_tuples->len);
 
      for (i=0;i<row_tuples->len;i++) {
@@ -565,7 +566,8 @@ go_data_slicer_dump_slicer(GODataSlicer *self) {
           g_object_unref(indexed->tuple);
           g_printf("\n");
      }
-     
+
+    
      g_printf("Column tuples: %u\n", col_tuples->len);
      for (i=0;i<col_tuples->len;i++) {
           indexed = (GODataSlicerIndexedTuple *)(g_ptr_array_index(col_tuples,i));
@@ -575,7 +577,6 @@ go_data_slicer_dump_slicer(GODataSlicer *self) {
      }
 
      g_printf("\n");
-
      /*Need loops to go one index further than the number of tuples to print subtotals*/
      for (i=0;i<=row_tuples->len;i++) {
 
@@ -583,7 +584,7 @@ go_data_slicer_dump_slicer(GODataSlicer *self) {
               row_tuple_in_order_num++;
           } else {
               row = (GODataSlicerIndexedTuple *)(g_ptr_array_index(col_tuples,i));               
-              row_tuple_in_order_num = row->relative_position;
+              row_tuple_in_order_num = row->relative_position;                             
           }
 
           for (j=0;j<=col_tuples->len;j++) {

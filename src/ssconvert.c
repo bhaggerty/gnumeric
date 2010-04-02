@@ -677,6 +677,7 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 				go_data_slicer_slice_cache(self);
 				go_data_slicer_dump_slicer(self);
 				g_object_unref(self);
+				/*g_object_unref(cache); doesnt work properly...cache must have ref counting issues*/
 			}
 
 			if (ssconvert_range)

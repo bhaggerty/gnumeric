@@ -214,9 +214,9 @@ void go_data_slicer_tuple_dump_tuple(GODataSlicerTuple * tuple) {
 
 		tvalue = VALUE_IS_EMPTY (value) ? VALUE_EMPTY : value->type;
 		if (tvalue == VALUE_FLOAT) {		
-			g_printf("%-2.1f ", value->v_float.val);
+			g_printf("%-4.1f ", value->v_float.val);
 		} else {
-			g_printf("- ");
+			g_printf("--.- ");
 		}
 	}
 	g_printf("]");
