@@ -139,13 +139,6 @@ go_data_cache_field_class_init (GODataCacheFieldClass *klass)
 			-1, G_MAXINT, -1,
 			GSF_PARAM_STATIC | G_PARAM_READWRITE));
 
-	/* Unclear how to select what is parent and what is child when dealing with groups */
-	/*g_object_class_install_property (gobject_class, PROP_GROUP_PARENT,
-		 g_param_spec_int ("group-parent", NULL,
-			"Index to CacheField with higher precedence in the group ?",
-			-1, G_MAXINT, -1,
-			GSF_PARAM_STATIC | G_PARAM_READWRITE));*/
-
 	parent_klass = g_type_class_peek_parent (klass);
 }
 
@@ -191,8 +184,8 @@ gboolean
 go_data_cache_field_is_base (GODataCacheField const *field)
 {
 	g_return_val_if_fail (IS_GO_DATA_CACHE_FIELD (field), FALSE);
-	g_print ("[%d] %s : parent = %d\n", field->indx, field->name->str,
-		 field->group_parent);
+	/*g_print ("[%d] %s : parent = %d\n", field->indx, field->name->str,
+		 field->group_parent); currently causes segfault because cache doesnt implement names''*/
 	return field->group_parent < 0 || field->group_parent == field->indx;
 }
 

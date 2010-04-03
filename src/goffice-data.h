@@ -11,7 +11,7 @@ typedef struct _GODataCacheField	GODataCacheField;
 typedef struct _GODataCacheSource	GODataCacheSource;
 
 typedef struct _GODataSlicer		GODataSlicer;
-typedef struct _GODataSlicerField	GODataSlicerField;
+typedef struct _GODataSlicerField   GODataSlicerField;
 
 typedef enum {
 	GDS_FIELD_TYPE_UNSET    = -1,

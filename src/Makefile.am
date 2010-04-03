@@ -192,7 +192,9 @@ libspreadsheet_la_SOURCES =			\
 	xml-sax-write.c				\
 	gnumeric-gconf.c			\
 	print.c					\
-	print-cell.c
+	print-cell.c                                 \
+	go-data-slicer-field.h                                 \
+	go-data-slicer-field.c
 
 # When we switch to subversion fix this to nest as
 # libspreadsheet-ver/spreadsheet/header
