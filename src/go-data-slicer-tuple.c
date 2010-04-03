@@ -166,7 +166,6 @@ go_data_slicer_tuple_class_init (GODataSlicerTupleClass *klass)
 gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODataSlicerTuple * other) {
 	guint i;
 	gint comparison;
-	int parent;
 	const GOVal * selfVal;
 	const GOVal * otherVal;	
 	g_warn_if_fail(self->tuple_template == other->tuple_template);	
@@ -175,15 +174,7 @@ gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODa
 	/*Iterate over tuple values, comparing left-to-right*/
 	comparison = 0; /*Assume equality and return appropriate value if any inequality is discovered*/
 	for (i=0;i<self->tuple_template->len;i++) {
-		GODataSlicerField * column = g_ptr_array_index(self->tuple_template, i);
-
-		/*TODO: implement in slicer
-		 Find base field if this is a grouped field
-		while (!go_data_cache_field_is_base(column)) {
-			g_object_get(column, "group-base", &parent, NULL);
-			column = go_data_cache_get_field(self->cache, parent);
-		}*/
-		
+		GODataSlicerField * column = g_ptr_array_index(self->tuple_template, i);		
 		
 		/*Retrieve and compare values*/
 		selfVal = go_data_slicer_field_get_val(column,self->record_num);

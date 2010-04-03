@@ -68,7 +68,7 @@ GType go_data_slicer_field_get_type (void) G_GNUC_CONST;
  * @record_num:     the record number within the cache to retrieve a value from,
  *					taking into account all bucketing/grouping.  
  * 
- * Returns a single representative value for that record, from the perspective
+ * Returns the single representative value for that record, from the perspective
  * of this slicer field.
  *
  * Returns: the representative value at record_num in the cache for this 

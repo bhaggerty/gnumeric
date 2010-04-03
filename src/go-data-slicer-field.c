@@ -154,7 +154,7 @@ void go_data_slicer_field_dump_val (GODataSlicerField const *self, unsigned int 
 	GnmValueType tvalue;
 	
 	if (self->cache_fields->len > 1) {
-		g_printf("bucket(");
+		g_printf("group(");
 	}
 	for (i=0;i<self->cache_fields->len;i++) {
 		field = (GODataCacheField *) g_ptr_array_index(self->cache_fields, i);
