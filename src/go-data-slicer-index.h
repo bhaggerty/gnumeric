@@ -66,7 +66,7 @@ struct _GODataSlicerIndex {
 
     gboolean completed;  /*a flag which represents whether or not all cache rows that will be added to this SlicerIndex have been added*/
    	GODataCache	*cache;  /*The cache associated with the slicer this slicer index belongs to*/
-    GPtrArray *tuple_template; /*an array of CacheField objects representing which values in a cache record belong to tuples in this SlicerIndex*/
+    GPtrArray *tuple_template; /*an array of SlicerField objects representing which values in a cache record belong to tuples in this SlicerIndex*/
     GPtrArray *tuples; /*an array of IndexedTuples sorted by the RECORDNUM property*/
     GTree *tuples_tree; /*a tree which essentially indexes the tuples array by tuple value rather than RECORDNUM*/
 

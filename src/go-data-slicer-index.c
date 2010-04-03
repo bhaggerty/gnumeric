@@ -31,7 +31,7 @@ enum
 	PROP_0,
 
     PROP_CACHE,     /*The cache associated with the slicer this slicer index belongs to*/
-    PROP_TEMPLATE,  /*an array of CacheField objects representing which values in a cache record belong to tuples in this SlicerIndex*/
+    PROP_TEMPLATE,  /*an array of SlicerField objects representing which values in a cache record belong to tuples in this SlicerIndex*/
     PROP_COMPLETED  /*a flag which represents whether or not all cache rows that will be added to this SlicerIndex have been added*/
 };
 
@@ -92,10 +92,11 @@ go_data_slicer_index_dispose (GObject *object)
 {
     guint i;
     GODataSlicerIndexedTuple * indexed_tuple;
+    GODataSlicerField * field;
     GODataSlicerIndex *self;
     g_return_if_fail (IS_GO_DATA_SLICER_INDEX (object));	
 	self = GO_DATA_SLICER_INDEX(object); /*Cast object into our type*/     
-
+     
     /*unref stuff we built
       Note that we dont have to unref tuples twice since we didn't ref them
       when we put them in the tree - the array 'holds' the reference.*/
@@ -105,6 +106,12 @@ go_data_slicer_index_dispose (GObject *object)
 	 g_free(indexed_tuple);
     }
 
+    /*unref tuple template*/
+    for (i=0;i<self->tuple_template->len;i++) {
+         field = (GODataSlicerField *) g_ptr_array_index(self->tuple_template, i);
+         g_object_unref(field);
+    }
+     
     /*unref stuff from slicer*/
     g_ptr_array_foreach(self->tuple_template, (GFunc)g_object_unref, NULL);     
      

@@ -175,18 +175,19 @@ gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODa
 	/*Iterate over tuple values, comparing left-to-right*/
 	comparison = 0; /*Assume equality and return appropriate value if any inequality is discovered*/
 	for (i=0;i<self->tuple_template->len;i++) {
-		GODataCacheField * column = g_ptr_array_index(self->tuple_template, i);
-		/*Find base field if this is a grouped field*/
-		
+		GODataSlicerField * column = g_ptr_array_index(self->tuple_template, i);
+
+		/*TODO: implement in slicer
+		 Find base field if this is a grouped field
 		while (!go_data_cache_field_is_base(column)) {
 			g_object_get(column, "group-base", &parent, NULL);
 			column = go_data_cache_get_field(self->cache, parent);
-		}
+		}*/
 		
 		
 		/*Retrieve and compare values*/
-		selfVal = go_data_cache_field_get_val(column,self->record_num);
-		otherVal = go_data_cache_field_get_val(column, other->record_num);
+		selfVal = go_data_slicer_field_get_val(column,self->record_num);
+		otherVal = go_data_slicer_field_get_val(column, other->record_num);
 		/*If one of the values is NULL*/
 		if (selfVal == NULL && otherVal != NULL) {
 			return -1;
@@ -208,8 +209,8 @@ void go_data_slicer_tuple_dump_tuple(GODataSlicerTuple * tuple) {
 /*Assume all values are numeric for now*/
 	g_printf("[");
 	for (i=0;i<tuple->tuple_template->len;i++) {
-		GODataCacheField * column = g_ptr_array_index(tuple->tuple_template, i);
-		value = go_data_cache_field_get_val(column,tuple->record_num);
+		GODataSlicerField * column = g_ptr_array_index(tuple->tuple_template, i);
+		value = go_data_slicer_field_get_val(column,tuple->record_num);
 
 		tvalue = VALUE_IS_EMPTY (value) ? VALUE_EMPTY : value->type;
 		if (tvalue == VALUE_FLOAT) {		

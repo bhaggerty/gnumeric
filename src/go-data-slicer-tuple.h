@@ -24,7 +24,7 @@
  * @see_also: #GoDataCache
  *
  * Represents a tuple of values from a record in the cache.  In particular, it 
- * belongs to a SlicerIndex which dictates which Cache Fields from a record    
+ * belongs to a SlicerIndex which dictates which Slicer Fields from a record    
  * are tupelized, and contains a record number to indicate the record in which
  * those values are contained.  Can be compared to another tuple from the same 
  * SlicerIndex.
@@ -35,6 +35,7 @@
 
 #include <glib-object.h>
 #include "go-data-cache-impl.h"
+#include "go-data-slicer-field.h"
 
 G_BEGIN_DECLS
 

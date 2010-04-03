@@ -654,6 +654,7 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 				go_data_slicer_create_cache(self, sheet, range);
 				cache = go_data_slicer_get_cache(self);
 				go_data_cache_dump(cache, NULL, NULL);
+
 				rowFields = g_array_new(FALSE, FALSE, sizeof(guint));
 				col = 0;
 				g_array_append_val(rowFields, col);
@@ -676,6 +677,7 @@ convert (char const *inarg, char const *outarg, char const *mergeargs[],
 				go_data_slicer_index_cache(self);
 				go_data_slicer_slice_cache(self);
 				go_data_slicer_dump_slicer(self);
+
 				g_object_unref(self);
 				/*g_object_unref(cache); doesnt work properly...cache must have ref counting issues*/
 			}

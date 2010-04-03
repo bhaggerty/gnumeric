@@ -25,6 +25,7 @@
 #include "go-data-cache.h"
 #include "gnm-data-cache-source.h"
 #include "go-data-slicer-index.h"
+#include "go-data-slicer-field.h"
 #include "go-data-slicer-cache-overlay.h"
 #include "go-data-slicer-tuple.h"
 #include "go-val.h"
@@ -286,21 +287,26 @@ go_data_slicer_set_cache (GODataSlicer *self, GODataCache *cache)
 static GODataSlicerIndex *
 go_data_slicer_create_index (GODataSlicer *self, GArray * tuple_template) {
     guint i, index;
-    GPtrArray * cache_fields;    
-
+    GPtrArray * slicer_fields;    
+    GODataSlicerField * slicer_field;
+    
     /*Convert integer tuple template into a GODataCacheField tuple template*/
-    cache_fields = g_ptr_array_sized_new(tuple_template->len);
+    slicer_fields = g_ptr_array_sized_new(tuple_template->len);
     for (i=0;i<tuple_template->len;i++) {
          index = g_array_index(tuple_template, guint, i);
          if (index < go_data_cache_num_fields (self->cache)) {
-             g_ptr_array_add(cache_fields, go_data_cache_get_field(self->cache, index));
+             /*wrap cache field in a slicer field*/
+             slicer_field = g_object_new(GO_DATA_SLICER_FIELD_TYPE, "cache_field", go_data_cache_get_field(self->cache, index), NULL);
+             g_ptr_array_add(slicer_fields, slicer_field);
          } else {
              g_warn_if_reached();
          }
     }
 
+    g_array_free(tuple_template, TRUE);
+     
     /*Construct a new SlicerIndex for column fields*/
-    return g_object_new(GO_DATA_SLICER_INDEX_TYPE, "cache", self->cache, "tuple_template", cache_fields, NULL);
+    return g_object_new(GO_DATA_SLICER_INDEX_TYPE, "cache", self->cache, "tuple_template", slicer_fields, NULL);
 }
 
 void go_data_slicer_set_col_field_index (GODataSlicer *self, GArray * tuple_template) {
@@ -533,21 +539,21 @@ go_data_slicer_dump_slicer(GODataSlicer *self) {
      GOVal * value;
      GPtrArray * row_tuples, * col_tuples;
      GODataSlicerIndexedTuple * indexed, * row, * col;
-     GODataCacheField * field;
+     GODataSlicerField * field;
      
      /*Print slicer information*/
      g_printf("\n\nSLICER DUMP: \n");
 
      g_printf("Using source columns ");
      for (i=0;i<self->row_field->tuple_template->len;i++) {
-          field = (GODataCacheField*)(g_ptr_array_index(self->row_field->tuple_template,i));
+          field = (GODataSlicerField*)(g_ptr_array_index(self->row_field->tuple_template,i));
           g_object_get(field,"index",&j,NULL);
           g_printf("%d ",j);
      }
      g_printf("as Row Fields\n");
      g_printf("Using source columns ");
      for (i=0;i<self->col_field->tuple_template->len;i++) {
-          field = (GODataCacheField*)(g_ptr_array_index(self->col_field->tuple_template,i));
+          field = (GODataSlicerField*)(g_ptr_array_index(self->col_field->tuple_template,i));
           g_object_get(field,"index",&j,NULL);
           g_printf("%d ",j);
      }

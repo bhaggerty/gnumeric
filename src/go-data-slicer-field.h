@@ -41,7 +41,7 @@ G_BEGIN_DECLS
 #define GO_DATA_SLICER_FIELD_GET_CLASS(obj)   (G_TYPE_INSTANCE_GET_CLASS ((obj), GO_DATA_SLICER_FIELD_TYPE, GODataSlicerFieldClass))
 
 typedef struct _GODataSlicerFieldClass GODataSlicerFieldClass;
-/*typedef struct _GODataSlicerField GODataSlicerField; see goffice-data*/
+/*typedef struct _GODataSlicerField GODataSlicerField; declared in goffice-data*/
 
 struct _GODataSlicerFieldClass
 {
@@ -53,9 +53,13 @@ struct _GODataSlicerField
 	GObject parent_instance;
 
 	GODataCacheField * cache_field;
+
+	GOVal const * (*get_val) (GODataSlicerField const *self, unsigned int record_num);
 };
 
 GType go_data_slicer_field_get_type (void) G_GNUC_CONST;
+
+GOVal const	 * go_data_slicer_field_get_val   (GODataSlicerField const *self, unsigned int record_num);
 
 G_END_DECLS
 
