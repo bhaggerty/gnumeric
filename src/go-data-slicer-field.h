@@ -52,14 +52,54 @@ struct _GODataSlicerField
 {
 	GObject parent_instance;
 
-	GODataCacheField * cache_field;
+	GPtrArray * cache_fields;
 
 	GOVal const * (*get_val) (GODataSlicerField const *self, unsigned int record_num);
+	void (*dump_val) (GODataSlicerField const *self, unsigned int record_num);	
+	void (*dump_cols) (GODataSlicerField const *self);
 };
 
 GType go_data_slicer_field_get_type (void) G_GNUC_CONST;
 
+/**
+ * get_val:
+ *
+ * @self:           this GODataSlicerField
+ * @record_num:     the record number within the cache to retrieve a value from,
+ *					taking into account all bucketing/grouping.  
+ * 
+ * Returns a single representative value for that record, from the perspective
+ * of this slicer field.
+ *
+ * Returns: the representative value at record_num in the cache for this 
+ *          SlicerField's primary CacheField, taking into account all 
+ *          bucketing/grouping
+ */
 GOVal const	 * go_data_slicer_field_get_val   (GODataSlicerField const *self, unsigned int record_num);
+
+/**
+ * dump_val:
+ *
+ * @self:           this GODataSlicerField
+ * @record_num:     the record number within the cache to retrieve a value from,
+ *					taking into account all bucketing/grouping.
+ *
+ * Prints the value of this Slicer Field at a particular record num.  This
+ * 'value' is really the value of all underlying Cache Fields, taking into
+ * account bucketing.
+ *
+ */
+void go_data_slicer_field_dump_val (GODataSlicerField const *self, unsigned int record_num);
+
+/**
+ * dump_cols:
+ *
+ * @self:           this GODataSlicerField
+ *
+ * Dumps a string representation of the cache columns which contribute to
+ * this SlicerField to the screen.
+ */
+void go_data_slicer_field_dump_cols (GODataSlicerField const *self);
 
 G_END_DECLS
 

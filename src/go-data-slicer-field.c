@@ -18,13 +18,13 @@
  */
 
 #include "go-data-slicer-field.h"
+#include <glib/gprintf.h>
 
 enum
 {
 	PROP_0,
 
-	PROP_INDEX,
-	PROP_CACHE_FIELD
+	PROP_CACHE_FIELDS
 };
 
 
@@ -34,17 +34,24 @@ G_DEFINE_TYPE (GODataSlicerField, go_data_slicer_field, G_TYPE_OBJECT);
 static void
 go_data_slicer_field_init (GODataSlicerField *self)
 {
-	self->cache_field = NULL;
+	self->cache_fields = g_ptr_array_new();
 
+	self->dump_cols = go_data_slicer_field_dump_cols;
 	self->get_val = go_data_slicer_field_get_val;
+	self->dump_val = go_data_slicer_field_dump_val;
 }
 
 static void
 go_data_slicer_field_finalize (GObject *object)
 {
+	guint i;
 	GODataSlicerField * self = (GODataSlicerField *)object;	
 	g_return_if_fail (IS_GO_DATA_SLICER_FIELD (object));
-	g_object_unref(self->cache_field);
+
+	/*unref underlying cache fields*/
+	for(i=0;i<self->cache_fields->len;i++) {
+		g_object_unref(g_ptr_array_index(self->cache_fields, i));
+	}
 
 	G_OBJECT_CLASS (go_data_slicer_field_parent_class)->finalize (object);
 }
@@ -52,21 +59,25 @@ go_data_slicer_field_finalize (GObject *object)
 static void
 go_data_slicer_field_set_property (GObject *object, guint prop_id, const GValue *value, GParamSpec *pspec)
 {
+	guint i;
 	GODataSlicerField * self = (GODataSlicerField *)object;
 	g_return_if_fail (IS_GO_DATA_SLICER_FIELD (object));
 	
 	switch (prop_id)
 	{
-	case PROP_INDEX:
-		/*read-only*/
-		break;
-	case PROP_CACHE_FIELD:
-		if (self->cache_field) {
-			g_object_unref(self->cache_field);
+	case PROP_CACHE_FIELDS:
+		if (self->cache_fields) {
+			/*unref underlying cache fields*/
+			for(i=0;i<self->cache_fields->len;i++) {
+				g_object_unref(g_ptr_array_index(self->cache_fields, i));
+			}
 		}
-		self->cache_field = g_value_get_object (value); 
-		g_object_ref(self->cache_field); 
-		break;
+		self->cache_fields = (GPtrArray *) g_value_get_pointer (value);
+		/*ref underlying cache fields*/
+		for(i=0;i<self->cache_fields->len;i++) {
+			g_object_ref(g_ptr_array_index(self->cache_fields, i));
+		}
+		break;		
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -79,14 +90,10 @@ go_data_slicer_field_get_property (GObject *object, guint prop_id, GValue *value
 	const GODataSlicerField * self = (const GODataSlicerField *)object;
 	g_return_if_fail (IS_GO_DATA_SLICER_FIELD (object));
 
-	switch (prop_id)
-	{
-	case PROP_INDEX:
-		g_value_set_int(value, self->cache_field->indx);
-		break;
-	case PROP_CACHE_FIELD:
-		g_value_set_object (value, self->cache_field);
-		break;
+	switch (prop_id) {
+	case PROP_CACHE_FIELDS:
+		g_value_set_pointer (value, self->cache_fields);
+		break;	
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
 		break;
@@ -102,17 +109,69 @@ go_data_slicer_field_class_init (GODataSlicerFieldClass *klass)
 	object_class->set_property = go_data_slicer_field_set_property;
 	object_class->get_property = go_data_slicer_field_get_property;
 
-	g_object_class_install_property (object_class, PROP_INDEX,
-		 g_param_spec_int ("index", NULL,
-			"Index of underlying cache field",
-			-1, G_MAXINT, -1,
-			G_PARAM_READABLE));
 	
-	g_object_class_install_property (object_class, PROP_CACHE_FIELD,
-	                                  g_param_spec_object("cache_field", NULL, NULL,
-	                              		GO_DATA_CACHE_FIELD_TYPE, G_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+	g_object_class_install_property (object_class, PROP_CACHE_FIELDS,
+	                                  g_param_spec_pointer("cache_fields", NULL, NULL,
+	                          				G_PARAM_READWRITE | G_PARAM_CONSTRUCT));
 }
 
 GOVal const	 *go_data_slicer_field_get_val   (GODataSlicerField const *self, unsigned int record_num) {
-	return go_data_cache_field_get_val(self->cache_field, record_num);
+	int parent;
+	GODataCacheField * primary = (GODataCacheField *) g_ptr_array_index(self->cache_fields, 0);
+
+	/*Find base field if this is a grouped field*/
+	while (!go_data_cache_field_is_base(primary)) {
+		g_object_get(primary, "group-base", &parent, NULL);
+		primary = go_data_cache_get_field(primary->cache, parent);
+	}
+	
+	return go_data_cache_field_get_val(primary, record_num);
+}
+
+void go_data_slicer_field_dump_cols (GODataSlicerField const *self) {
+	guint i;
+	GODataCacheField * field;
+
+	if (self->cache_fields->len > 1) {
+		g_printf("group(");
+	} else {
+		g_printf("(");
+	}
+	
+	for (i=0;i<self->cache_fields->len;i++) {
+		field = (GODataCacheField *) g_ptr_array_index(self->cache_fields, i);
+		g_printf("%d", field->indx);
+		if (i==0 && self->cache_fields->len > 1) g_printf("*");
+		if (i != self->cache_fields->len-1) g_printf(" ");
+	}
+	g_printf(")");
+}
+
+void go_data_slicer_field_dump_val (GODataSlicerField const *self, unsigned int record_num) {
+	guint i;
+	GODataCacheField * field;
+	const GOVal * value;
+	GnmValueType tvalue;
+	
+	if (self->cache_fields->len > 1) {
+		g_printf("bucket(");
+	}
+	for (i=0;i<self->cache_fields->len;i++) {
+		field = (GODataCacheField *) g_ptr_array_index(self->cache_fields, i);
+
+		value = go_data_cache_field_get_val(field,record_num);
+		tvalue = VALUE_IS_EMPTY (value) ? VALUE_EMPTY : value->type;
+		if (tvalue == VALUE_FLOAT) {		
+			g_printf("%-4.1f", value->v_float.val);
+		} else {
+			/*TODO: Deal with the situation in which values are not numeric*/
+			g_printf("--.-");
+		}
+
+		if (i==0 && self->cache_fields->len > 1) g_printf("*");
+		if (i != self->cache_fields->len-1) g_printf(" ");
+	}
+	if (self->cache_fields->len > 1) {
+		g_printf(")");
+	}
 }

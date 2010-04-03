@@ -204,20 +204,13 @@ gint go_data_slicer_tuple_compare_to (const GODataSlicerTuple * self, const GODa
 
 void go_data_slicer_tuple_dump_tuple(GODataSlicerTuple * tuple) {
 	guint i;
-	const GOVal * value;
-	GnmValueType tvalue;
-/*Assume all values are numeric for now*/
+	GODataSlicerField * column;
+	
 	g_printf("[");
 	for (i=0;i<tuple->tuple_template->len;i++) {
-		GODataSlicerField * column = g_ptr_array_index(tuple->tuple_template, i);
-		value = go_data_slicer_field_get_val(column,tuple->record_num);
-
-		tvalue = VALUE_IS_EMPTY (value) ? VALUE_EMPTY : value->type;
-		if (tvalue == VALUE_FLOAT) {		
-			g_printf("%-4.1f ", value->v_float.val);
-		} else {
-			g_printf("--.- ");
-		}
+		column = g_ptr_array_index(tuple->tuple_template, i);
+		go_data_slicer_field_dump_val (column, tuple->record_num);
+		if (i != tuple->tuple_template->len-1) g_printf(" ");
 	}
 	g_printf("]");
 }

@@ -287,16 +287,18 @@ go_data_slicer_set_cache (GODataSlicer *self, GODataCache *cache)
 static GODataSlicerIndex *
 go_data_slicer_create_index (GODataSlicer *self, GArray * tuple_template) {
     guint i, index;
-    GPtrArray * slicer_fields;    
+    GPtrArray * cache_fields, * slicer_fields; 
     GODataSlicerField * slicer_field;
-    
+
     /*Convert integer tuple template into a GODataCacheField tuple template*/
     slicer_fields = g_ptr_array_sized_new(tuple_template->len);
     for (i=0;i<tuple_template->len;i++) {
          index = g_array_index(tuple_template, guint, i);
          if (index < go_data_cache_num_fields (self->cache)) {
-             /*wrap cache field in a slicer field*/
-             slicer_field = g_object_new(GO_DATA_SLICER_FIELD_TYPE, "cache_field", go_data_cache_get_field(self->cache, index), NULL);
+             /*wrap cache field in array, then slicer field*/
+             cache_fields = g_ptr_array_sized_new(1);
+             g_ptr_array_add(cache_fields, go_data_cache_get_field(self->cache, index));
+             slicer_field = g_object_new(GO_DATA_SLICER_FIELD_TYPE, "cache_fields", cache_fields, NULL);
              g_ptr_array_add(slicer_fields, slicer_field);
          } else {
              g_warn_if_reached();
@@ -547,15 +549,13 @@ go_data_slicer_dump_slicer(GODataSlicer *self) {
      g_printf("Using source columns ");
      for (i=0;i<self->row_field->tuple_template->len;i++) {
           field = (GODataSlicerField*)(g_ptr_array_index(self->row_field->tuple_template,i));
-          g_object_get(field,"index",&j,NULL);
-          g_printf("%d ",j);
+          field->dump_cols(field); g_printf(" ");
      }
      g_printf("as Row Fields\n");
      g_printf("Using source columns ");
      for (i=0;i<self->col_field->tuple_template->len;i++) {
           field = (GODataSlicerField*)(g_ptr_array_index(self->col_field->tuple_template,i));
-          g_object_get(field,"index",&j,NULL);
-          g_printf("%d ",j);
+          field->dump_cols(field); g_printf(" ");
      }
      g_printf("as Column Fields\n");
 
